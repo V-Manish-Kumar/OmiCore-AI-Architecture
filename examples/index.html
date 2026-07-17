@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniCore Task Compiler Frontend</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0b0b0f;
+            --card-bg: rgba(20, 20, 28, 0.7);
+            --card-border: rgba(255, 255, 255, 0.05);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --primary: #8b5cf6;
+            --primary-glow: rgba(139, 92, 246, 0.4);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --accent: #3b82f6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 40%);
+        }
+
+        header {
+            padding: 2rem 4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--card-border);
+            backdrop-filter: blur(10px);
+            background-color: rgba(11, 11, 15, 0.5);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-section h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #a78bfa, #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding: 0.25rem 0.6rem;
+            border-radius: 9999px;
+            background: rgba(139, 92, 246, 0.15);
+            color: #c084fc;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            letter-spacing: 0.05em;
+        }
+
+        main {
+            flex: 1;
+            padding: 3rem 4rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+        }
+
+        .input-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .input-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+        }
+
+        .input-card h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .textarea-wrapper {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            background: rgba(15, 15, 20, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            line-height: 1.5;
+            resize: none;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, var(--primary), #6d28d9);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .output-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .output-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            min-height: 500px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 1rem;
+        }
+
+        .card-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .meta-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 0.8rem 1rem;
+        }
+
+        .meta-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .meta-value {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.25rem;
+        }
+
+        .tag {
+            font-size: 0.8rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .tag.capability {
+            background: rgba(59, 130, 246, 0.1);
+            color: #93c5fd;
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .tag.constraint {
+            background: rgba(245, 158, 11, 0.1);
+            color: #fde047;
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+
+        .json-viewer {
+            flex: 1;
+            background: rgba(10, 10, 14, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1rem;
+            overflow: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: #a7f3d0;
+            max-height: 400px;
+        }
+
+        .graph-container {
+            flex: 1;
+            background: rgba(10, 10, 14, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            overflow: auto;
+            min-height: 250px;
+        }
+
+        .nodes-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .node-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .node-card:hover {
+            border-color: var(--primary);
+            background: rgba(139, 92, 246, 0.03);
+        }
+
+        .node-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .node-id {
+            font-family: 'Fira Code', monospace;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .node-desc {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .node-details {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .node-details strong {
+            color: var(--text-primary);
+        }
+
+        .placeholder-text {
+            color: var(--text-secondary);
+            text-align: center;
+            font-style: italic;
+            width: 100%;
+        }
+
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-section">
+            <h1>OmniCore <span class="badge">Compiler Frontend</span></h1>
+        </div>
+        <div class="status-indicator">
+            <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--success); border-color: rgba(16, 185, 129, 0.3);">Adaptive Runtime Ready</span>
+        </div>
+    </header>
+
+    <main>
+        <!-- Input section -->
+        <section class="input-card">
+            <h2>Natural Language Intent Input</h2>
+            <div class="textarea-wrapper">
+                <textarea id="prompt-input" placeholder="Enter your natural language task here... e.g. Search GitHub for Python compiler projects, compare the top five repositories, summarize the findings, and generate a PDF."></textarea>
+            </div>
+            <button id="compile-btn" class="submit-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                Compile Intent to IR
+            </button>
+        </section>
+
+        <!-- Output section -->
+        <section class="output-grid">
+            <!-- Left Card: Task IR -->
+            <div class="output-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></polygon><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        Lowered Task IR (Logical Schema)
+                    </h3>
+                </div>
+
+                <div id="ir-placeholder" class="placeholder-text">
+                    Compile a query to inspect the generated Task IR metadata.
+                </div>
+
+                <div id="ir-loading" class="loading-spinner hidden"></div>
+
+                <div id="ir-content" class="hidden" style="display: flex; flex-direction: column; gap: 1.5rem; height: 100%;">
+                    <div class="meta-grid">
+                        <div class="meta-item">
+                            <div class="meta-label">Primary Intent</div>
+                            <div id="meta-intent" class="meta-value">-</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Domain</div>
+                            <div id="meta-domain" class="meta-value">-</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Complexity</div>
+                            <div id="meta-complexity" class="meta-value">-</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Confidence Score</div>
+                            <div id="meta-confidence" class="meta-value">-</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="meta-label">Required Capabilities</div>
+                        <div id="meta-capabilities" class="tag-container"></div>
+                    </div>
+
+                    <div>
+                        <div class="meta-label">Extracted Constraints</div>
+                        <div id="meta-constraints" class="tag-container"></div>
+                    </div>
+
+                    <div style="flex: 1; display: flex; flex-direction: column;">
+                        <div class="meta-label">Raw Task IR JSON</div>
+                        <pre id="json-box" class="json-viewer"></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Card: Execution DAG -->
+            <div class="output-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                        Lowered Execution DAG (Physical Schema)
+                    </h3>
+                </div>
+
+                <div id="dag-placeholder" class="placeholder-text">
+                    Compile a query to render the Directed Acyclic Graph (DAG) flowchart.
+                </div>
+
+                <div id="dag-loading" class="loading-spinner hidden"></div>
+
+                <div id="dag-content" class="hidden" style="display: flex; flex-direction: column; gap: 1.5rem; height: 100%;">
+                    <div class="meta-label">Visual Graph Flow</div>
+                    <div id="dag-graph" class="graph-container"></div>
+
+                    <div>
+                        <div class="meta-label">Topological Execution Order</div>
+                        <div id="dag-nodes" class="nodes-container" style="margin-top: 0.5rem;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+
+        const compileBtn = document.getElementById('compile-btn');
+        const promptInput = document.getElementById('prompt-input');
+
+        // Placeholders
+        const irPlaceholder = document.getElementById('ir-placeholder');
+        const irLoading = document.getElementById('ir-loading');
+        const irContent = document.getElementById('ir-content');
+
+        const dagPlaceholder = document.getElementById('dag-placeholder');
+        const dagLoading = document.getElementById('dag-loading');
+        const dagContent = document.getElementById('dag-content');
+
+        compileBtn.addEventListener('click', async () => {
+            const prompt = promptInput.value.strip ? promptInput.value.strip() : promptInput.value.trim();
+            if (!prompt) return;
+
+            // Show loading
+            irPlaceholder.classList.add('hidden');
+            irContent.classList.add('hidden');
+            irLoading.classList.remove('hidden');
+
+            dagPlaceholder.classList.add('hidden');
+            dagContent.classList.add('hidden');
+            dagLoading.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/parse', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    const errors = errorData.detail?.errors || [errorData.detail || 'Compilation failed'];
+                    alert('Compilation Error:\n' + errors.join('\n'));
+                    resetViews();
+                    return;
+                }
+
+                const data = await response.json();
+                renderResults(data);
+
+            } catch (err) {
+                alert('Connection error: ' + err.message);
+                resetViews();
+            }
+        });
+
+        function resetViews() {
+            irPlaceholder.classList.remove('hidden');
+            irLoading.classList.add('hidden');
+            irContent.classList.add('hidden');
+
+            dagPlaceholder.classList.remove('hidden');
+            dagLoading.classList.add('hidden');
+            dagContent.classList.add('hidden');
+        }
+
+        async function renderResults(data) {
+            const { task_ir, execution_dag } = data;
+
+            // 1. Render Task IR Panel
+            document.getElementById('meta-intent').textContent = task_ir.primary_intent;
+            document.getElementById('meta-domain').textContent = task_ir.domain;
+            document.getElementById('meta-complexity').textContent = task_ir.estimated_complexity;
+            document.getElementById('meta-confidence').textContent = Math.round(task_ir.confidence_score * 100) + '%';
+
+            // Required Capabilities Tags
+            const capsContainer = document.getElementById('meta-capabilities');
+            capsContainer.innerHTML = '';
+            if (task_ir.required_capabilities.length > 0) {
+                task_ir.required_capabilities.forEach(cap => {
+                    const tag = document.createElement('span');
+                    tag.className = 'tag capability';
+                    tag.textContent = cap;
+                    capsContainer.appendChild(tag);
+                });
+            } else {
+                capsContainer.textContent = 'None detected';
+            }
+
+            // Constraints Tags
+            const constraintsContainer = document.getElementById('meta-constraints');
+            constraintsContainer.innerHTML = '';
+            if (task_ir.constraints.length > 0) {
+                task_ir.constraints.forEach(c => {
+                    const tag = document.createElement('span');
+                    tag.className = 'tag constraint';
+                    tag.textContent = c;
+                    constraintsContainer.appendChild(tag);
+                });
+            } else {
+                constraintsContainer.textContent = 'None detected';
+            }
+
+            // Raw JSON Viewer
+            document.getElementById('json-box').textContent = JSON.stringify(task_ir, null, 2);
+
+            irLoading.classList.add('hidden');
+            irContent.classList.remove('hidden');
+
+            // 2. Render DAG Panel
+            // Generate Mermaid Diagram syntax
+            let mermaidStr = 'graph TD\n';
+            mermaidStr += '  classDef default fill:#1e1e2d,stroke:#3b82f6,stroke-width:2px,color:#f3f4f6;\n';
+            mermaidStr += '  classDef parallel fill:#111827,stroke:#10b981,stroke-width:2px,color:#f3f4f6;\n';
+            
+            // Nodes mapping
+            execution_dag.nodes.forEach(node => {
+                const styleClass = node.parallelizable ? ':::parallel' : '';
+                mermaidStr += `  ${node.node_id}["<strong>${node.name}</strong><br/>Capability: ${node.capability}"]${styleClass}\n`;
+            });
+
+            // Dependencies mapping
+            if (execution_dag.dependencies.length > 0) {
+                execution_dag.dependencies.forEach(dep => {
+                    mermaidStr += `  ${dep.source} --> ${dep.target}\n`;
+                });
+            } else {
+                // If single node, draw self pointing or just declare
+                if (execution_dag.nodes.length === 1) {
+                    // Do nothing, mermaid renders single node automatically
+                }
+            }
+
+            // Render Mermaid Graph
+            const graphDiv = document.getElementById('dag-graph');
+            graphDiv.innerHTML = '';
+            const preElement = document.createElement('pre');
+            preElement.className = 'mermaid';
+            preElement.textContent = mermaidStr;
+            graphDiv.appendChild(preElement);
+
+            try {
+                await mermaid.run({ nodes: [preElement] });
+            } catch (mermaidError) {
+                console.error('Mermaid render error:', mermaidError);
+                graphDiv.innerHTML = '<span style="color: var(--danger);">Failed to render visual graph.</span>';
+            }
+
+            // Render Node cards (Topological sort sequence)
+            const nodesContainer = document.getElementById('dag-nodes');
+            nodesContainer.innerHTML = '';
+            
+            execution_dag.topological_order.forEach((nodeId, idx) => {
+                const node = execution_dag.nodes.find(n => n.node_id === nodeId);
+                if (!node) return;
+
+                const nodeCard = document.createElement('div');
+                nodeCard.className = 'node-card';
+                nodeCard.innerHTML = `
+                    <div class="node-top">
+                        <span class="node-id">Step ${idx + 1}: ${node.node_id}</span>
+                        <span class="badge" style="background: rgba(139, 92, 246, 0.1); color: var(--primary);">${node.capability}</span>
+                    </div>
+                    <div class="node-desc">${node.description}</div>
+                    <div class="node-details">
+                        <span>Inputs: <strong>${node.input.length > 0 ? node.input.join(', ') : 'None'}</strong></span>
+                        <span>Outputs: <strong>${node.output.length > 0 ? node.output.join(', ') : 'None'}</strong></span>
+                        <span>Est. Time: <strong>${node.estimated_time}s</strong></span>
+                        <span>Parallelizable: <strong>${node.parallelizable ? 'Yes' : 'No'}</strong></span>
+                    </div>
+                `;
+                nodesContainer.appendChild(nodeCard);
+            });
+
+            dagLoading.classList.add('hidden');
+            dagContent.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
