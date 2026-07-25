@@ -32,6 +32,138 @@ class TopologyNode(BaseModel):
 class TopologyRequest(BaseModel):
     nodes: List[TopologyNode]
 
+import asyncio
+import uuid
+
+# Active query executions registry
+active_executions: Dict[str, Dict[str, Any]] = {}
+
+async def run_pipeline_execution(execution_id: str, query: str):
+    exec_state = active_executions[execution_id]
+    try:
+        parser = IntentParser()
+        optimizer = TaskOptimizer()
+
+        # Token calculations based on lexical words count
+        raw_tokens = len(query.split())
+        optimized_tokens = max(1, int(raw_tokens * 0.75))
+        savings_pct = round(((raw_tokens - optimized_tokens) / max(1, raw_tokens)) * 100.0, 1)
+
+        exec_state["logs"].append("> Running Intent Analysis and Syntax Parsing...")
+        task_ir, raw_dag = parser.compile(query)
+        ast = parser.ast_parser.parse(query)
+        ast_mermaid = ASTVisualizer.visualize(ast)
+
+        exec_state["logs"].append("> Running LLVM-Style Optimization passes...")
+        opt_dag, report = optimizer.optimize(task_ir, raw_dag)
+        
+        # Initial and Optimized DAG diagrams
+        initial_dag_mermaid = DAGVisualizer.visualize(raw_dag, show_tokens=True)
+        optimized_dag_mermaid = DAGVisualizer.visualize(opt_dag, show_tokens=True)
+
+        exec_state.update({
+            "status": "running",
+            "ast_mermaid": ast_mermaid,
+            "initial_dag_mermaid": initial_dag_mermaid,
+            "optimized_dag_mermaid": optimized_dag_mermaid,
+            "current_dag_mermaid": optimized_dag_mermaid,
+            "passes": report.optimization_passes_applied,
+            "token_stats": {
+                "raw_tokens": raw_tokens,
+                "optimized_tokens": optimized_tokens,
+                "savings_percentage": savings_pct
+            },
+            "cost_estimation": {
+                "runtime": round(report.estimated_runtime, 4),
+                "cost": round(report.estimated_cost, 4),
+                "tokens": report.estimated_tokens
+            },
+            "realtime_metrics": {
+                "completed_nodes": 0,
+                "total_nodes": len(opt_dag.nodes),
+                "total_tokens_processed": 0,
+                "total_tokens_saved": report.estimated_tokens - int(report.estimated_tokens * 0.75) if report.estimated_tokens else 0
+            }
+        })
+        
+        for node in opt_dag.nodes:
+            exec_state["node_statuses"][node.node_id] = "Pending"
+
+        exec_state["logs"].append(f"> Compiled {len(opt_dag.nodes)} optimized nodes. Initializing Adaptive Runtime...")
+
+        # Setup runtime with simulated visual latency (e.g. 1.2s per node)
+        adapter = MockCapabilityAdapter(latency=1.2)
+        runtime = AdaptiveRuntime(adapter=adapter)
+
+        # Event handler to capture node transitions
+        def on_event(event):
+            evt_type = event.event_type
+            data = event.data
+            nid = data.get("node_id")
+
+            if evt_type == "node_started":
+                exec_state["node_statuses"][nid] = "Running"
+                exec_state["logs"].append(f"> Node '{nid}' started execution using capability: {data.get('capability')}")
+            elif evt_type == "node_completed":
+                exec_state["node_statuses"][nid] = "Completed"
+                exec_state["realtime_metrics"]["completed_nodes"] += 1
+                node_tokens = 500  # standard heuristic
+                exec_state["realtime_metrics"]["total_tokens_processed"] += node_tokens
+                exec_state["logs"].append(f"> Node '{nid}' completed successfully. Outputs: {data.get('outputs')}")
+            elif evt_type == "node_failed":
+                exec_state["node_statuses"][nid] = "Failed"
+                exec_state["logs"].append(f"> Node '{nid}' failed execution: {data.get('error')}")
+
+            # Re-generate current DAG Mermaid with colored highlights
+            exec_state["current_dag_mermaid"] = DAGVisualizer.visualize(
+                opt_dag,
+                node_statuses=exec_state["node_statuses"],
+                show_tokens=True
+            )
+
+        runtime.context.event_bus.subscribe("*", on_event)
+
+        exec_state["logs"].append("> Dynamic runtime scheduler started...")
+        result = await runtime.execute(opt_dag, inputs={"query": query})
+
+        exec_state["status"] = "completed" if result.status.value == "Completed" else "failed"
+        exec_state["final_outputs"] = result.outputs
+        exec_state["logs"].append(f"> Runtime execution finished with status: {result.status.value}")
+
+    except Exception as e:
+        exec_state["status"] = "failed"
+        exec_state["logs"].append(f"> COMPILE/RUNTIME ERROR: {str(e)}")
+
+@app.post("/api/execute")
+async def execute_query(req: SandboxRequest) -> Dict[str, Any]:
+    """Compiles the query and runs task execution on a background thread/task."""
+    execution_id = f"exec_{uuid.uuid4().hex[:8]}"
+    active_executions[execution_id] = {
+        "status": "compiling",
+        "query": req.query,
+        "ast_mermaid": "",
+        "initial_dag_mermaid": "",
+        "optimized_dag_mermaid": "",
+        "current_dag_mermaid": "",
+        "passes": [],
+        "node_statuses": {},
+        "logs": ["> Compiler pipeline initialized."],
+        "token_stats": {"raw_tokens": 0, "optimized_tokens": 0, "savings_percentage": 0.0},
+        "cost_estimation": {"runtime": 0.0, "cost": 0.0, "tokens": 0},
+        "realtime_metrics": {"completed_nodes": 0, "total_nodes": 0, "total_tokens_processed": 0, "total_tokens_saved": 0},
+        "final_outputs": {}
+    }
+    # Spawn background task
+    asyncio.create_task(run_pipeline_execution(execution_id, req.query))
+    return {"success": True, "execution_id": execution_id}
+
+@app.get("/api/execution/{execution_id}")
+def get_execution_status(execution_id: str) -> Dict[str, Any]:
+    """Returns the current execution details, logs, and token stats."""
+    if execution_id not in active_executions:
+        return {"success": False, "error": "Execution ID not found"}
+    return active_executions[execution_id]
+
 def wire_devtools(cluster: DistributedClusterManager, tracer: Tracer, profiler: PerformanceProfiler):
     global shared_cluster, shared_tracer, shared_profiler
     shared_cluster = cluster
@@ -72,7 +204,8 @@ async def compile_sandbox(req: SandboxRequest) -> Dict[str, Any]:
         savings_pct = round(((raw_tokens - optimized_tokens) / max(1, raw_tokens)) * 100.0, 1)
 
         task_ir, raw_dag = parser.compile(req.query)
-        ast_mermaid = ASTVisualizer.visualize(raw_dag)
+        ast = parser.ast_parser.parse(req.query)
+        ast_mermaid = ASTVisualizer.visualize(ast)
 
         opt_dag, report = optimizer.optimize(task_ir, raw_dag)
         dag_mermaid = DAGVisualizer.visualize(opt_dag)
@@ -269,7 +402,7 @@ def get_ui():
             }
             .panel-header h2 {
                 margin: 0;
-                font-size: 15px;
+                font-size: 14px;
                 font-weight: 600;
                 color: #cbd5e1;
                 text-transform: uppercase;
@@ -353,6 +486,31 @@ def get_ui():
             }
             .btn-action:hover { opacity: 0.9; }
             
+            .diag-tab-bar {
+                display: flex;
+                background: rgba(15, 23, 42, 0.4);
+                border-bottom: 1px solid var(--glass-border);
+            }
+            .diag-tab-btn {
+                background: none;
+                border: none;
+                color: #94a3b8;
+                font-family: inherit;
+                font-size: 12px;
+                font-weight: 600;
+                cursor: pointer;
+                padding: 10px 16px;
+                flex: 1;
+                text-align: center;
+                border-bottom: 2px solid transparent;
+                transition: color 0.2s, border-color 0.2s;
+            }
+            .diag-tab-btn.active {
+                color: #a5b4fc;
+                border-bottom-color: var(--accent-color);
+                background: rgba(99, 102, 241, 0.05);
+            }
+            
             /* Topology Node List styling */
             .node-item {
                 background: rgba(255, 255, 255, 0.02);
@@ -373,7 +531,7 @@ def get_ui():
             
             /* Compiler Terminal styling */
             .terminal {
-                height: 120px;
+                height: 140px;
                 background: #020617;
                 border-top: 1px solid var(--glass-border);
                 padding: 12px 18px;
@@ -381,6 +539,7 @@ def get_ui():
                 font-size: 12px;
                 overflow-y: auto;
                 color: var(--success-color);
+                line-height: 1.5;
             }
             
             /* Visual Canvas tab */
@@ -419,6 +578,7 @@ def get_ui():
                 border-radius: 12px;
                 font-size: 11px;
                 cursor: pointer;
+                transition: background 0.2s;
             }
             .tag:hover { background: rgba(99, 102, 241, 0.15); }
         </style>
@@ -434,6 +594,17 @@ def get_ui():
                 {node_id: "n1", name: "Summarization Pass", capability: "SUMMARIZATION", input: "findings", output: "summary"}
             ];
 
+            let currentDiagView = 'ast';
+            let currentAst = `graph TD
+  idle["Run compilation to see AST Tree"]`;
+            let currentInitial = `graph TD
+  idle["Before Optimization (Raw prompts)"]`;
+            let currentOptimized = `graph TD
+  idle["After Optimization (Pruned/Merged)"]`;
+            let currentLive = `graph TD
+  idle["Live Executing DAG status"]`;
+            let executionPollInterval = null;
+
             async function fetchMetrics() {
                 try {
                     const statusRes = await fetch('/api/status');
@@ -448,7 +619,6 @@ def get_ui():
 
                     const metricsRes = await fetch('/api/metrics');
                     const metricsData = await metricsRes.json();
-                    document.getElementById('completed-tasks').innerText = metricsData.completed_tasks;
                     document.getElementById('health-score').innerText = (metricsData.cluster_health_score * 100).toFixed(1) + '%';
                 } catch (e) {
                     console.error(e);
@@ -466,41 +636,150 @@ def get_ui():
                 document.getElementById('token-usage').innerText = tokenCount + " Lexical Word tokens";
             }
 
+            function setDiagramView(view) {
+                currentDiagView = view;
+                document.querySelectorAll('.diag-tab-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById(`tab-btn-${view}`).classList.add('active');
+
+                // Hide all
+                document.getElementById('ast-view').style.display = 'none';
+                document.getElementById('opt-view').style.display = 'none';
+                document.getElementById('run-view').style.display = 'none';
+
+                if (view === 'ast') {
+                    document.getElementById('ast-view').style.display = 'flex';
+                    renderMermaid('canvas-ast', currentAst);
+                } else if (view === 'opt') {
+                    document.getElementById('opt-view').style.display = 'flex';
+                    renderMermaid('canvas-initial', currentInitial);
+                    renderMermaid('canvas-optimized', currentOptimized);
+                } else if (view === 'run') {
+                    document.getElementById('run-view').style.display = 'flex';
+                    renderMermaid('canvas-live', currentLive);
+                }
+            }
+
+            async function renderMermaid(elementId, mermaidCode) {
+                const canvas = document.getElementById(elementId);
+                if (!canvas) return;
+                if (!mermaidCode) {
+                    canvas.innerHTML = '<div style="color: #64748b; font-size: 13px;">No graph data available</div>';
+                    return;
+                }
+                try {
+                    const id = elementId + '-svg-' + Math.floor(Math.random() * 10000);
+                    const { svg } = await window.mermaid.render(id, mermaidCode);
+                    canvas.innerHTML = svg;
+                } catch (e) {
+                    console.error("Mermaid error:", e);
+                    canvas.innerHTML = '<div style="color: #ef4444; font-size: 13px;">Render error</div>';
+                }
+            }
+
             async function runNLPCompile() {
                 const query = document.getElementById('query-input').value;
                 const terminal = document.getElementById('console-terminal');
-                terminal.innerText = "> Running NLP compilation pass...";
+                const btn = document.querySelector('.btn-action');
+
+                terminal.innerText = "> Initializing compiler frontend...";
+                terminal.style.color = "#cbd5e1";
+                btn.disabled = true;
+                btn.style.opacity = 0.5;
 
                 try {
-                    const res = await fetch('/api/compile_sandbox', {
+                    const res = await fetch('/api/execute', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({query})
                     });
                     const data = await res.json();
+                    
                     if (data.success) {
-                        terminal.innerText = `> SUCCESS: AST compiled. Applied passes: ${data.passes.join(', ')}`;
-                        terminal.style.color = "#10b981";
+                        const execId = data.execution_id;
+                        terminal.innerText = `> Compiler pipeline started. Execution ID: ${execId}`;
+                        
+                        // Start polling
+                        if (executionPollInterval) clearInterval(executionPollInterval);
+                        executionPollInterval = setInterval(() => pollExecution(execId), 400);
+                    } else {
+                        terminal.innerText = `> ERROR: Could not initiate execution.`;
+                        terminal.style.color = "#ef4444";
+                        resetBtnState();
+                    }
+                } catch (e) {
+                    terminal.innerText = `> ERROR: ${e}`;
+                    terminal.style.color = "#ef4444";
+                    resetBtnState();
+                }
+            }
 
-                        // Renders DAG Mermaid
-                        const canvas = document.getElementById('canvas-diagram');
-                        canvas.removeAttribute('data-processed');
-                        canvas.innerText = data.dag_mermaid;
-                        await window.mermaid.run({nodes: [canvas]});
+            async function pollExecution(execId) {
+                try {
+                    const res = await fetch(`/api/execution/${execId}`);
+                    const data = await res.json();
+                    
+                    if (!data.success && data.error) {
+                        clearInterval(executionPollInterval);
+                        document.getElementById('console-terminal').innerText = `> ERROR: ${data.error}`;
+                        document.getElementById('console-terminal').style.color = "#ef4444";
+                        resetBtnState();
+                        return;
+                    }
 
-                        // Set estimated metrics
-                        document.getElementById('est-runtime').innerText = data.cost_estimation.runtime.toFixed(3) + 's';
-                        document.getElementById('est-cost').innerText = '$' + data.cost_estimation.cost.toFixed(4);
-                        document.getElementById('est-tokens').innerText = data.cost_estimation.tokens + " tokens";
+                    // Update logs
+                    const terminal = document.getElementById('console-terminal');
+                    terminal.innerHTML = data.logs.map(log => `<div>${log}</div>`).join('');
+                    terminal.scrollTop = terminal.scrollHeight; // Auto-scroll
+
+                    // Save mermaid diagrams
+                    currentAst = data.ast_mermaid;
+                    currentInitial = data.initial_dag_mermaid;
+                    currentOptimized = data.optimized_dag_mermaid;
+                    currentLive = data.current_dag_mermaid;
+
+                    // Update UI values
+                    document.getElementById('est-runtime').innerText = data.cost_estimation.runtime.toFixed(3) + 's';
+                    document.getElementById('est-cost').innerText = '$' + data.cost_estimation.cost.toFixed(4);
+                    document.getElementById('est-tokens').innerText = data.cost_estimation.tokens + " tokens";
+                    
+                    if (data.token_stats.savings_percentage > 0) {
                         document.getElementById('opt-savings').innerText = data.token_stats.savings_percentage + "% optimization savings";
                     } else {
-                        terminal.innerText = `> COMPILE ERROR: ${data.error}`;
-                        terminal.style.color = "#ef4444";
+                        document.getElementById('opt-savings').innerText = "0.0% savings";
                     }
-                } catch(e) {
-                    terminal.innerText = `> INTERN ERROR: ${e}`;
-                    terminal.style.color = "#ef4444";
+
+                    document.getElementById('completed-tasks').innerText = `${data.realtime_metrics.completed_nodes} / ${data.realtime_metrics.total_nodes}`;
+                    document.getElementById('health-score').innerText = (data.status === 'failed' ? '0%' : '100%');
+
+                    // Refresh diagram visualizer for active tab
+                    setDiagramView(currentDiagView);
+
+                    // Check if finished
+                    if (data.status === 'completed' || data.status === 'failed') {
+                        clearInterval(executionPollInterval);
+                        resetBtnState();
+
+                        if (data.status === 'completed') {
+                            terminal.innerHTML += `<div style="color: #34d399; margin-top: 8px; font-weight: bold;">> SUCCESS: Execution complete! Outputs:</div>`;
+                            terminal.innerHTML += `<pre style="color: #60a5fa; margin-top: 4px; font-family: monospace; font-size: 11px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px;">${JSON.stringify(data.final_outputs, null, 2)}</pre>`;
+                            terminal.scrollTop = terminal.scrollHeight;
+                            
+                            // Auto transition to live execution view upon success
+                            setDiagramView('run');
+                        } else {
+                            terminal.innerHTML += `<div style="color: #f87171; margin-top: 8px; font-weight: bold;">> FAILED: Execution halted with errors.</div>`;
+                            terminal.scrollTop = terminal.scrollHeight;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Polling error:", e);
                 }
+            }
+
+            function resetBtnState() {
+                const btn = document.querySelector('.btn-action');
+                btn.disabled = false;
+                btn.style.opacity = 1.0;
             }
 
             function renderTopologyList() {
@@ -546,6 +825,7 @@ def get_ui():
             async function compileCustomTopology() {
                 const terminal = document.getElementById('console-terminal');
                 terminal.innerText = "> Running dynamic topology graph compilation...";
+                terminal.style.color = "#cbd5e1";
 
                 try {
                     const res = await fetch('/api/compile_topology', {
@@ -556,22 +836,23 @@ def get_ui():
                     const data = await res.json();
                     
                     if (data.success) {
-                        terminal.innerText = `> ` + data.diagnostics.join('\\n');
+                        terminal.innerText = `> ` + data.diagnostics.join('\n');
                         terminal.style.color = "#10b981";
 
-                        // Renders graph
-                        const canvas = document.getElementById('canvas-diagram');
-                        canvas.removeAttribute('data-processed');
-                        canvas.innerText = data.dag_mermaid;
-                        await window.mermaid.run({nodes: [canvas]});
-
+                        // Set values
+                        currentInitial = data.dag_mermaid;
+                        currentOptimized = data.dag_mermaid;
+                        currentLive = data.dag_mermaid;
+                        
+                        setDiagramView('run');
+                        
                         // Set estimated metrics
                         document.getElementById('est-runtime').innerText = data.cost_estimation.runtime.toFixed(3) + 's';
                         document.getElementById('est-cost').innerText = '$' + data.cost_estimation.cost.toFixed(4);
                         document.getElementById('est-tokens').innerText = data.cost_estimation.tokens + " tokens";
                         document.getElementById('opt-savings').innerText = "Dynamic Topology Mode";
                     } else {
-                        terminal.innerText = `> ` + data.diagnostics.join('\\n');
+                        terminal.innerText = `> ` + data.diagnostics.join('\n');
                         terminal.style.color = "#ef4444";
                     }
                 } catch(e) {
@@ -592,7 +873,8 @@ def get_ui():
             window.onload = () => {
                 fetchMetrics();
                 renderTopologyList();
-                selectPreset("Search Google for ML trends and summarize report.");
+                // Preset matching Common Subexpression Elimination to showcase token optimization
+                selectPreset("Search Google for ML servers, search Google for ML servers, compare them, and generate a PDF report.");
             };
         </script>
     </head>
@@ -613,9 +895,9 @@ def get_ui():
                 <div class="panel-body">
                     <!-- NLP Tab -->
                     <div id="tab-nlp" class="tab-content active">
-                        <div style="display: flex; gap: 6px; margin-bottom: 12px;">
-                            <div class="tag" onclick="selectPreset('Search Google for Python models.')">Search</div>
-                            <div class="tag" onclick="selectPreset('Analyze customer feedback and build PDF.')">Complex pipeline</div>
+                        <div style="display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;">
+                            <div class="tag" onclick="selectPreset('Search Google for ML servers, search Google for ML servers, compare them, and generate a PDF report.')">Redundancy CSE</div>
+                            <div class="tag" onclick="selectPreset('Search Arxiv for LLM agents and summarize findings.')">Search & Summarize</div>
                         </div>
                         <textarea id="query-input" class="sandbox-input" onkeyup="updateTokenUsage()"></textarea>
                         
@@ -623,7 +905,7 @@ def get_ui():
                             <span style="color: #94a3b8;">Lexer usage:</span>
                             <strong id="token-usage" style="color: #a5b4fc; float: right;">0 tokens</strong>
                         </div>
-                        <button class="btn-action" onclick="runNLPCompile()">Compile & Execute</button>
+                        <button class="btn-action" onclick="runNLPCompile()">Compile & Run Pipeline</button>
                     </div>
 
                     <!-- Dynamic Topology Tab -->
@@ -658,15 +940,32 @@ def get_ui():
 
             <!-- PANEL 2: Visual Graph & Compiler Diagnostics Console -->
             <div class="panel" style="grid-column: span 1;">
-                <div class="panel-header">
-                    <h2>Compiler Graph Visualizer</h2>
+                <div class="diag-tab-bar">
+                    <button id="tab-btn-ast" class="diag-tab-btn active" onclick="setDiagramView('ast')">1. AST Tree</button>
+                    <button id="tab-btn-opt" class="diag-tab-btn" onclick="setDiagramView('opt')">2. Graph Optimization</button>
+                    <button id="tab-btn-run" class="diag-tab-btn" onclick="setDiagramView('run')">3. Live Execution</button>
                 </div>
                 <div class="canvas-area">
-                    <div id="canvas-diagram" class="mermaid">
-                        graph TD
-                          n0["Google Query (WEB_SEARCH)"]
-                          n1["Summarization Pass (SUMMARIZATION)"]
-                          n0 -->|findings| n1
+                    <!-- AST View -->
+                    <div id="ast-view" class="diag-content active" style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
+                        <div id="canvas-ast" style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;"></div>
+                    </div>
+
+                    <!-- Optimization View -->
+                    <div id="opt-view" class="diag-content" style="width: 100%; height: 100%; display: none; flex-direction: row; gap: 20px;">
+                        <div style="flex: 1; text-align: center; display: flex; flex-direction: column;">
+                            <div style="font-size: 11px; color: #a5b4fc; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.5px;">Initial Graph (Raw inputs)</div>
+                            <div id="canvas-initial" style="flex: 1; display: flex; justify-content: center; align-items: center;"></div>
+                        </div>
+                        <div style="flex: 1; text-align: center; display: flex; flex-direction: column; border-left: 1px solid var(--glass-border); padding-left: 20px;">
+                            <div style="font-size: 11px; color: var(--success-color); margin-bottom: 6px; font-weight: 600; letter-spacing: 0.5px;">Optimized Graph (Token Minimization)</div>
+                            <div id="canvas-optimized" style="flex: 1; display: flex; justify-content: center; align-items: center;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Live Execution View -->
+                    <div id="run-view" class="diag-content" style="width: 100%; height: 100%; display: none; display: flex; justify-content: center; align-items: center;">
+                        <div id="canvas-live" style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;"></div>
                     </div>
                 </div>
                 <div id="console-terminal" class="terminal">> Linter console ready. Waiting for compilation run...</div>
@@ -708,11 +1007,11 @@ def get_ui():
                 </div>
                 <div class="panel-body" style="flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center;">
                     <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding: 12px; border-radius: 8px;">
-                        <span style="font-size: 11px; color: #94a3b8;">Completed</span>
-                        <div id="completed-tasks" style="font-size: 24px; font-weight: 700; margin-top: 4px;">0</div>
+                        <span style="font-size: 11px; color: #94a3b8;">Completed Nodes</span>
+                        <div id="completed-tasks" style="font-size: 24px; font-weight: 700; margin-top: 4px;">0 / 0</div>
                     </div>
                     <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding: 12px; border-radius: 8px;">
-                        <span style="font-size: 11px; color: #94a3b8;">Health</span>
+                        <span style="font-size: 11px; color: #94a3b8;">Cluster Health</span>
                         <div id="health-score" style="font-size: 24px; font-weight: 700; margin-top: 4px;">100%</div>
                     </div>
                 </div>
