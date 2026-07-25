@@ -20,8 +20,8 @@ This blueprint documents core architectural constraints, thread-safety guideline
 - **Explicit Unsubscriptions**: Every worker, scheduler, and heartbeat sweeper must unsubscribe listeners inside `.stop()` hooks to avoid leaking handles.
 - **Daemon Threads**: Background servers (e.g. Uvicorn in `DashboardServer`) and heartbeat monitoring loops must run on threads with `daemon=True`.
 
-### 1.4 Observability Isolation
-- Telemetry, profiling, debugging, and visualization tools (`devtools/`, `visualization/`, `dashboard/`) must remain **read-only** and never modify AST nodes, Task IR variables, or execution DAG states.
+### 1.4 Observability & UI Isolation
+- Telemetry, profiling, debugging, visualization tools, and web dashboards (`devtools/`, `visualization/`, `dashboard/`) must remain **read-only** and never modify AST nodes, Task IR variables, or execution DAG states.
 
 ---
 
@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS ontology_edges (
 5. **Module 5 (Strategy Cost Planner)**: Pre-flight latency, token count, and dollar cost projection heuristic modeling.
 6. **Module 6 (Knowledge Graph)**: NetworkX semantic entity-tool graph & recency-based pronoun resolution (`EntityResolver`).
 7. **Module 7 (Distributed Cluster Orchestrator)**: Node registry, load balancers (`Round-Robin`, `Least-Loaded`, `Resource-Aware`), background heartbeat sweeper, and fault-tolerant task redistribution.
-8. **Module 8 (Observability IDE)**: FastAPI dashboard, Uvicorn daemon, step breakpoints (`CompilerDebugger`), and Mermaid.js diagram visualizers.
+8. **Module 8 (Observability IDE & Liquid Glass Web UI)**: FastAPI server, Uvicorn daemon, step breakpoints (`CompilerDebugger`), Mermaid.js diagram visualizers, and React + TypeScript + Tailwind CSS Liquid Glass UI (`omnicore/dashboard/frontend/` -> `dist/`).
 9. **Module 9 (Research Framework)**: Synthetic DAG workload generator, statistical analysis (means, medians, stddev, percentiles), and comparative markdown/HTML reporting.
 
 ---
@@ -97,6 +97,11 @@ CREATE TABLE IF NOT EXISTS ontology_edges (
 1. Implement balancer logic accepting capability and active worker list (`omnicore/distributed/load_balancer.py`).
 2. Integrate policy into `PlacementStrategy` (`omnicore/distributed/placement_strategy.py`).
 
+### 4.4 Dashboard UI Modifications
+1. React source code lives in `omnicore/dashboard/frontend/src/`.
+2. Build bundle with `npm run build` inside `omnicore/dashboard/frontend/` (outputs to `omnicore/dashboard/dist/`).
+3. FastAPI (`omnicore/dashboard/api.py`) automatically serves `dist/index.html` at `GET /` and mounts static assets at `/assets`.
+
 ---
 
 ## 5. Verification Checklist
@@ -105,4 +110,5 @@ Before committing changes, ensure:
 - [ ] No direct vendor LLM client imports in `runtime/` or `distributed/`.
 - [ ] Cross-namespace references use `if TYPE_CHECKING:` and forward strings.
 - [ ] Sweep loops and server daemon threads stop cleanly inside `.stop()`.
+- [ ] Frontend changes are built to `omnicore/dashboard/dist` via `npm run build`.
 - [ ] All 13 test suites pass (`python -m pytest`).

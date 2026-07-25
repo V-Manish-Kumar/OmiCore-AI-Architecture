@@ -60,7 +60,7 @@ OmniCore consists of 9 decoupled modules:
 5. **Strategy Cost Planner (`omnicore/planner`)**: Heuristically projects latencies, token counts, and execution costs before dispatching plans.
 6. **Semantic Knowledge Graph (`omnicore/knowledge`)**: NetworkX directed ontology graph supporting entity-tool mapping and recency-based pronoun resolution.
 7. **Distributed Cluster Orchestrator (`omnicore/distributed`, `omnicore/cluster`)**: Manages worker nodes, heartbeat sweep monitoring, task dispatches, and fault-tolerant redistribution over an async Pub/Sub event bus (`LocalMessageBus`).
-8. **Observability IDE & Telemetry (`omnicore/dashboard`, `omnicore/devtools`, `omnicore/visualization`)**: FastAPI web interface rendering real-time Mermaid.js flowcharts, step debugging breakpoints, timing traces, and performance profiling.
+8. **Observability IDE & Liquid Glass Web UI (`omnicore/dashboard`, `omnicore/devtools`, `omnicore/visualization`)**: React + TypeScript + Tailwind CSS dashboard with translucent frosted glass visuals, real-time Mermaid.js flowcharts, step debugging breakpoints, timing traces, and performance profiling.
 9. **Research & Benchmarking Framework (`omnicore/research`, `omnicore/plugins`)**: Synthetic workload generation, statistical analysis (means, medians, standard errors, percentiles), and comparative optimization reporting.
 
 ---
@@ -72,7 +72,7 @@ omnicore/
 ├── cli/             # CLI application entry points
 ├── cluster/         # Worker node structure and capacity definitions
 ├── communication/   # Pub/Sub event bus broker and RPC protocol definitions
-├── dashboard/       # FastAPI dashboard server & interactive Web IDE UI
+├── dashboard/       # FastAPI server & React + TS + Tailwind Liquid Glass UI (`frontend/`, `dist/`)
 ├── devtools/        # Compiler step debugger, profiler, tracer, inspector
 ├── distributed/     # Load balancers, node registry, heartbeat sweep, fault tolerance
 ├── IR/              # Enums and core IR models
@@ -95,6 +95,7 @@ examples/            # Integration and end-to-end usage examples
 
 ### 1. Prerequisites
 - **Python 3.10+**
+- **Node.js 18+** (for frontend development)
 
 ### 2. Environment Setup
 ```bash
@@ -118,9 +119,12 @@ python -m pytest
 
 ## CLI Usage
 
-The command-line interface provides tools to parse, optimize, execute, profile, and debug queries:
+The command-line interface provides tools to parse, optimize, execute, profile, debug, and serve the dashboard:
 
 ```bash
+# Start the Liquid Glass Dashboard server
+python omnicore/cli/main.py dashboard --port 8001
+
 # Parse natural language query into Task IR
 python omnicore/cli/main.py compile --query "Search Google for ML tools and compile PDF report."
 
@@ -142,9 +146,9 @@ python omnicore/cli/main.py debug --query "Analyze info." --breakpoints "parsing
 
 ---
 
-## Web IDE & Observability Dashboard
+## Web IDE & Liquid Glass Dashboard
 
-Launch the FastAPI observability dashboard:
+Launch the React + TypeScript + Tailwind CSS Liquid Glass dashboard server:
 
 ```bash
 python -m omnicore.dashboard.server
@@ -155,9 +159,18 @@ Or run via CLI:
 python omnicore/cli/main.py dashboard --port 8001
 ```
 
-Access the UI at `http://127.0.0.1:8001` to view live cluster maps, token counters, dynamic topology editing, and Mermaid.js DAG visualizations.
+Access the UI at `http://127.0.0.1:8001` to experience:
+- **Compiler Sandbox**: Interactive natural language query prompt with live lexical word & token count meters.
+- **Visual Topology Canvas**: Interactive Mermaid.js diagram viewer displaying AST hierarchy trees, raw vs. optimized graph comparisons, and live colored node execution flowcharts.
+- **Dynamic Topology Builder**: Interactive node builder to construct custom capability graphs and validate topological sorting & cycle detection in real-time.
+- **Telemetry & Worker Pools**: Live cost projection cards, token reduction statistics, and active cluster worker monitor status cards.
+- **Terminal Console**: macOS-style glowing execution log stream with status indicators and log controls.
+- **Traces & Performance Profiler**: Performance report gauges detailing parsing and optimization phase durations alongside plan cache hit rates.
 
 ### REST API Summary
+- `GET /`: Serves the React Liquid Glass Single Page Application.
+- `POST /api/execute`: Compiles and executes a query asynchronously with live event bus progress.
+- `GET /api/execution/{execution_id}`: Retrieves live execution status, node colors, and log streams.
 - `GET /api/status`: Node worker statuses & cluster diagnostic events.
 - `GET /api/metrics`: Queue depth, latency, task counters, and cluster health score.
 - `GET /api/traces`: Compiler phase trace spans and duration breakdown.
