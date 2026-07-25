@@ -17,6 +17,14 @@ export interface RealtimeMetrics {
   total_tokens_saved: number;
 }
 
+export interface GraphifyAnalytics {
+  estimated_baseline_tokens: number;
+  our_actual_tokens: number;
+  tokens_saved: number;
+  savings_percentage: number;
+  nodes_eliminated: number;
+}
+
 export interface ExecutionDetails {
   status: 'compiling' | 'running' | 'completed' | 'failed';
   query: string;
@@ -24,6 +32,8 @@ export interface ExecutionDetails {
   initial_dag_mermaid: string;
   optimized_dag_mermaid: string;
   current_dag_mermaid: string;
+  graphify_mermaid?: string;
+  graphify_analytics?: GraphifyAnalytics;
   passes: string[];
   node_statuses: Record<string, string>;
   logs: string[];
@@ -33,6 +43,7 @@ export interface ExecutionDetails {
   final_outputs?: Record<string, any>;
   error?: string;
 }
+
 
 export interface TopologyNode {
   node_id: string;

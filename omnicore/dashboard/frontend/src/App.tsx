@@ -129,8 +129,11 @@ export function App() {
                 initialDagMermaid={executionDetails.initial_dag_mermaid}
                 optimizedDagMermaid={executionDetails.optimized_dag_mermaid}
                 currentDagMermaid={executionDetails.current_dag_mermaid}
+                graphifyMermaid={executionDetails.graphify_mermaid}
+                graphifyAnalytics={executionDetails.graphify_analytics}
                 passes={executionDetails.passes}
               />
+
               <TerminalLogs
                 logs={executionDetails.logs}
                 status={executionDetails.status}

@@ -10,7 +10,9 @@ from omnicore.parser.intent_parser import IntentParser
 from omnicore.optimizer.optimizer import TaskOptimizer
 from omnicore.visualization.dag_visualizer import DAGVisualizer
 from omnicore.visualization.ast_visualizer import ASTVisualizer
+from omnicore.visualization.knowledge_graph_visualizer import KnowledgeGraphVisualizer
 from omnicore.runtime.runtime import AdaptiveRuntime
+
 from omnicore.runtime.adapters.capability_adapter import MockCapabilityAdapter
 from omnicore.ir.enums import Capability
 
@@ -69,17 +71,21 @@ async def run_pipeline_execution(execution_id: str, query: str):
         initial_dag_mermaid = DAGVisualizer.visualize(raw_dag, show_tokens=True)
         optimized_dag_mermaid = DAGVisualizer.visualize(opt_dag, show_tokens=True)
 
+        kg_data = KnowledgeGraphVisualizer.visualize(task_ir, opt_dag, original_node_count=len(raw_dag.nodes))
+
         exec_state.update({
             "status": "running",
             "ast_mermaid": ast_mermaid,
             "initial_dag_mermaid": initial_dag_mermaid,
             "optimized_dag_mermaid": optimized_dag_mermaid,
             "current_dag_mermaid": optimized_dag_mermaid,
+            "graphify_mermaid": kg_data["mermaid"],
+            "graphify_analytics": kg_data["analytics"],
             "passes": report.optimization_passes_applied,
             "token_stats": {
-                "raw_tokens": raw_tokens,
-                "optimized_tokens": optimized_tokens,
-                "savings_percentage": savings_pct
+                "raw_tokens": kg_data["analytics"]["estimated_baseline_tokens"],
+                "optimized_tokens": kg_data["analytics"]["our_actual_tokens"],
+                "savings_percentage": kg_data["analytics"]["savings_percentage"]
             },
             "cost_estimation": {
                 "runtime": round(report.estimated_runtime, 4),
@@ -90,14 +96,14 @@ async def run_pipeline_execution(execution_id: str, query: str):
                 "completed_nodes": 0,
                 "total_nodes": len(opt_dag.nodes),
                 "total_tokens_processed": 0,
-                "total_tokens_saved": report.estimated_tokens - int(report.estimated_tokens * 0.75) if report.estimated_tokens else 0
+                "total_tokens_saved": kg_data["analytics"]["tokens_saved"]
             }
         })
         
         for node in opt_dag.nodes:
             exec_state["node_statuses"][node.node_id] = "Pending"
 
-        exec_state["logs"].append(f"> Compiled {len(opt_dag.nodes)} optimized nodes. Initializing Adaptive Runtime...")
+        exec_state["logs"].append(f"> Compiled {len(opt_dag.nodes)} optimized nodes into Knowledge Graph. Initializing Adaptive Runtime...")
 
         # Setup runtime with simulated visual latency (e.g. 1.2s per node)
         adapter = MockCapabilityAdapter(latency=1.2)
@@ -153,6 +159,8 @@ async def execute_query(req: SandboxRequest) -> Dict[str, Any]:
         "initial_dag_mermaid": "",
         "optimized_dag_mermaid": "",
         "current_dag_mermaid": "",
+        "graphify_mermaid": "",
+        "graphify_analytics": {"estimated_baseline_tokens": 0, "our_actual_tokens": 0, "tokens_saved": 0, "savings_percentage": 0.0},
         "passes": [],
         "node_statuses": {},
         "logs": ["> Compiler pipeline initialized."],
@@ -205,12 +213,6 @@ async def compile_sandbox(req: SandboxRequest) -> Dict[str, Any]:
         parser = IntentParser()
         optimizer = TaskOptimizer()
 
-        # Token calculations based on lexical words count
-        raw_tokens = len(req.query.split())
-        # Simulate optimization pass token reduction (e.g. CSE or Dead Code pruning)
-        optimized_tokens = max(1, int(raw_tokens * 0.75))
-        savings_pct = round(((raw_tokens - optimized_tokens) / max(1, raw_tokens)) * 100.0, 1)
-
         task_ir, raw_dag = parser.compile(req.query)
         ast = parser.ast_parser.parse(req.query)
         ast_mermaid = ASTVisualizer.visualize(ast)
@@ -218,15 +220,19 @@ async def compile_sandbox(req: SandboxRequest) -> Dict[str, Any]:
         opt_dag, report = optimizer.optimize(task_ir, raw_dag)
         dag_mermaid = DAGVisualizer.visualize(opt_dag)
 
+        kg_data = KnowledgeGraphVisualizer.visualize(task_ir, opt_dag, original_node_count=len(raw_dag.nodes))
+
         return {
             "success": True,
             "ast_mermaid": ast_mermaid,
             "dag_mermaid": dag_mermaid,
+            "graphify_mermaid": kg_data["mermaid"],
+            "graphify_analytics": kg_data["analytics"],
             "passes": report.optimization_passes_applied,
             "token_stats": {
-                "raw_tokens": raw_tokens,
-                "optimized_tokens": optimized_tokens,
-                "savings_percentage": savings_pct
+                "raw_tokens": kg_data["analytics"]["estimated_baseline_tokens"],
+                "optimized_tokens": kg_data["analytics"]["our_actual_tokens"],
+                "savings_percentage": kg_data["analytics"]["savings_percentage"]
             },
             "cost_estimation": {
                 "runtime": round(report.estimated_runtime, 4),
@@ -240,11 +246,14 @@ async def compile_sandbox(req: SandboxRequest) -> Dict[str, Any]:
             "success": False,
             "ast_mermaid": "",
             "dag_mermaid": "",
+            "graphify_mermaid": "",
+            "graphify_analytics": {"estimated_baseline_tokens": 0, "our_actual_tokens": 0, "tokens_saved": 0, "savings_percentage": 0.0},
             "passes": [],
             "token_stats": {"raw_tokens": 0, "optimized_tokens": 0, "savings_percentage": 0.0},
             "cost_estimation": {},
             "error": str(e)
         }
+
 
 @app.post("/api/compile_topology")
 def compile_topology(req: TopologyRequest) -> Dict[str, Any]:
