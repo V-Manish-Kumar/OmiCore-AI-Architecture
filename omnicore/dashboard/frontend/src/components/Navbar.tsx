@@ -17,29 +17,16 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="sticky top-0 z-50 w-full px-6 py-3 border-b border-white/10 bg-slate-950/60 backdrop-blur-2xl shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-        {/* macOS Window Controls + Logo */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 pr-2 border-r border-white/10">
-            <span className="w-3 h-3 rounded-full bg-rose-500/80 shadow-[0_0_10px_rgba(244,63,94,0.6)] cursor-pointer hover:opacity-100 transition-opacity" />
-            <span className="w-3 h-3 rounded-full bg-amber-500/80 shadow-[0_0_10px_rgba(245,158,11,0.6)] cursor-pointer hover:opacity-100 transition-opacity" />
-            <span className="w-3 h-3 rounded-full bg-emerald-500/80 shadow-[0_0_10px_rgba(16,185,129,0.6)] cursor-pointer hover:opacity-100 transition-opacity" />
+        {/* Logo & Title */}
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500/30 to-purple-500/30 border border-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]">
+            <Cpu className="w-5 h-5 text-indigo-300" />
           </div>
-
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500/30 to-purple-500/30 border border-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]">
-              <Cpu className="w-5 h-5 text-indigo-300" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-indigo-200">
-                  OmniCore AI
-                </h1>
-                <span className="px-1.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                  v2.0 Glass
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 font-medium">Task Compiler & Adaptive Distributed Runtime</p>
-            </div>
+          <div>
+            <h1 className="text-sm font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-indigo-200">
+              OmniCore AI
+            </h1>
+            <p className="text-[11px] text-slate-400 font-medium">Task Compiler & Adaptive Distributed Runtime</p>
           </div>
         </div>
 

@@ -120,6 +120,12 @@ def debug_cmd(args):
 
     print("\nDebugging complete.")
 
+def dashboard_cmd(args):
+    import uvicorn
+    from omnicore.dashboard.api import app
+    print(f"Starting OmniCore Liquid Glass Dashboard on http://{args.host}:{args.port}...")
+    uvicorn.run(app, host=args.host, port=args.port)
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="OmniCore AI Task Compiler Developer Command Line Tools")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -149,6 +155,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_debug.add_argument("--query", required=True, help="Natural language command query")
     p_debug.add_argument("--breakpoints", default="parsing,optimization", help="Comma-separated compilation breakpoints list")
 
+    # 7. dashboard
+    p_dash = subparsers.add_parser("dashboard", help="Start the web observability dashboard server")
+    p_dash.add_argument("--host", default="127.0.0.1", help="Host IP address")
+    p_dash.add_argument("--port", type=int, default=8001, help="Port number")
+
     return parser
 
 def main():
@@ -161,7 +172,8 @@ def main():
         "execute": run_cmd,
         "profile": profile_cmd,
         "graph": graph_cmd,
-        "debug": debug_cmd
+        "debug": debug_cmd,
+        "dashboard": dashboard_cmd
     }
 
     cmd_fn = commands_map.get(args.command)
@@ -170,3 +182,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

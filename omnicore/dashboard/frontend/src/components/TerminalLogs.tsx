@@ -16,19 +16,11 @@ export const TerminalLogs: React.FC<TerminalLogsProps> = ({ logs, status = 'idle
 
   return (
     <div className="liquid-glass-card rounded-3xl p-5 border border-white/15 shadow-2xl flex flex-col gap-3 min-h-[220px]">
-      {/* macOS Terminal Header */}
+      {/* Terminal Header */}
       <div className="flex items-center justify-between border-b border-white/10 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <TerminalIcon className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-xs font-bold font-mono text-slate-200">Linter Console & Execution Logs</h3>
-          </div>
+        <div className="flex items-center gap-2">
+          <TerminalIcon className="w-4 h-4 text-emerald-400" />
+          <h3 className="text-xs font-bold font-mono text-slate-200">Linter Console & Execution Logs</h3>
         </div>
 
         {/* Status Pill & Clear */}

@@ -42,3 +42,7 @@ class DashboardServer:
                 self._thread.join(timeout=2.0)
             self._server = None
             self._thread = None
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8001)
+
