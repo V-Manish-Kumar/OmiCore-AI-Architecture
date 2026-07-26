@@ -4,27 +4,13 @@
     {
       "src": "api/index.py",
       "use": "@vercel/python"
-    },
-    {
-      "src": "omnicore/dashboard/frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "../dist"
-      }
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "api/index.py"
-    },
-    {
-      "src": "/assets/(.*)",
-      "dest": "omnicore/dashboard/dist/assets/$1"
-    },
-    {
       "src": "/(.*)",
-      "dest": "omnicore/dashboard/dist/index.html"
+      "dest": "api/index.py"
     }
   ]
 }
+
