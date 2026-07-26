@@ -96,14 +96,28 @@ class DistributedClusterManager:
         # In a real environment, this would publish a cancellation payload to active workers.
 
     def status(self) -> Dict[str, Any]:
-        """Returns details on online workers and diagnostics logs."""
+        """Returns details on online workers, busy states, and diagnostics logs."""
         active = self.registry.list_active_workers()
+        busy = [wid for wid, w in self.registry.workers.items() if w.get("active_tasks", 0) > 0]
         reports = self.diagnostics_logger.get_report()
+        worker_details = [
+            {
+                "worker_id": w["worker_id"],
+                "state": "active" if w.get("active_tasks", 0) > 0 else "idle",
+                "active_tasks": w.get("active_tasks", 0),
+                "current_node": w.get("current_node"),
+                "capabilities": [c.value if hasattr(c, "value") else str(c) for c in w["capabilities"]]
+            }
+            for w in self.registry.workers.values()
+        ]
         return {
             "online_workers": active,
-            "status": "healthy" if len(active) > 0 else "degraded",
+            "busy_workers": busy,
+            "worker_details": worker_details,
+            "status": f"{len(busy)} Active / {len(active)} Workers" if len(active) > 0 else "Idle",
             "diagnostics": reports
         }
+
 
     def metrics(self) -> Dict[str, Any]:
         """Returns cluster resource utilizations and latencies."""

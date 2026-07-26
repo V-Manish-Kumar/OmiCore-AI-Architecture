@@ -120,15 +120,33 @@ async def run_pipeline_execution(execution_id: str, query: str):
             if evt_type == "node_started":
                 exec_state["node_statuses"][nid] = "Running"
                 exec_state["logs"].append(f"> Node '{nid}' started execution using capability: {data.get('capability')}")
+                if shared_cluster:
+                    cap_str = str(data.get('capability'))
+                    for w in shared_cluster.registry.workers.values():
+                        caps = [c.value if hasattr(c, "value") else str(c) for c in w["capabilities"]]
+                        if cap_str in caps or any(cap_str in c for c in caps):
+                            w["active_tasks"] = 1
+                            w["current_node"] = nid
+                            break
             elif evt_type == "node_completed":
                 exec_state["node_statuses"][nid] = "Completed"
                 exec_state["realtime_metrics"]["completed_nodes"] += 1
                 node_tokens = 500  # standard heuristic
                 exec_state["realtime_metrics"]["total_tokens_processed"] += node_tokens
                 exec_state["logs"].append(f"> Node '{nid}' completed successfully. Outputs: {data.get('outputs')}")
+                if shared_cluster:
+                    for w in shared_cluster.registry.workers.values():
+                        if w.get("current_node") == nid:
+                            w["active_tasks"] = 0
+                            w["current_node"] = None
             elif evt_type == "node_failed":
                 exec_state["node_statuses"][nid] = "Failed"
                 exec_state["logs"].append(f"> Node '{nid}' failed execution: {data.get('error')}")
+                if shared_cluster:
+                    for w in shared_cluster.registry.workers.values():
+                        if w.get("current_node") == nid:
+                            w["active_tasks"] = 0
+                            w["current_node"] = None
 
             # Re-generate current DAG Mermaid with colored highlights
             exec_state["current_dag_mermaid"] = DAGVisualizer.visualize(
@@ -142,9 +160,15 @@ async def run_pipeline_execution(execution_id: str, query: str):
         exec_state["logs"].append("> Dynamic runtime scheduler started...")
         result = await runtime.execute(opt_dag, inputs={"query": query})
 
+        if shared_cluster:
+            for w in shared_cluster.registry.workers.values():
+                w["active_tasks"] = 0
+                w["current_node"] = None
+
         exec_state["status"] = "completed" if result.status.value == "Completed" else "failed"
         exec_state["final_outputs"] = result.outputs
         exec_state["logs"].append(f"> Runtime execution finished with status: {result.status.value}")
+
 
     except Exception as e:
         exec_state["status"] = "failed"

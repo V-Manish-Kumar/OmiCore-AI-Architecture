@@ -85,14 +85,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
             </span>
-            <span className="text-xs font-semibold text-slate-300 capitalize">{status || 'Online'}</span>
+            <span className="text-xs font-semibold text-slate-300 capitalize">{status || '3 Nodes Registered'}</span>
           </div>
 
           <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-medium">
             <Cpu className="w-3.5 h-3.5" />
-            <span>{activeWorkersCount} Cluster Nodes</span>
+            <span>{activeWorkersCount > 0 ? `${activeWorkersCount} Active Task Worker` : '0 Active (Standby Pool)'}</span>
           </div>
         </div>
+
       </div>
     </header>
   );

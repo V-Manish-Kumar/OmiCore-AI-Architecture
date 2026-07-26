@@ -53,8 +53,18 @@ export interface TopologyNode {
   output: string;
 }
 
+export interface WorkerDetail {
+  worker_id: string;
+  state: 'idle' | 'active';
+  active_tasks: number;
+  capabilities: string[];
+  current_node?: string | null;
+}
+
 export interface ClusterStatus {
   online_workers: string[];
+  busy_workers?: string[];
+  worker_details?: WorkerDetail[];
   status: string;
   diagnostics: {
     warnings: string[];
@@ -65,6 +75,7 @@ export interface ClusterStatus {
     }[];
   };
 }
+
 
 export interface MetricsData {
   active_workers: number;

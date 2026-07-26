@@ -84,19 +84,63 @@ export const TelemetryPanel: React.FC<TelemetryPanelProps> = ({
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 max-h-[180px] overflow-y-auto pr-1">
-          {onlineWorkers.length > 0 ? (
+        <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-1">
+          {clusterStatus?.worker_details && clusterStatus.worker_details.length > 0 ? (
+            clusterStatus.worker_details.map((worker, idx) => {
+              const isActive = worker.state === 'active';
+              return (
+                <div
+                  key={idx}
+                  className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${
+                    isActive
+                      ? 'bg-emerald-500/10 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
+                      : 'bg-white/5 border-white/10 hover:border-indigo-500/20'
+                  }`}
+                >
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          isActive
+                            ? 'bg-emerald-400 animate-ping shadow-[0_0_8px_rgba(52,211,153,0.8)]'
+                            : 'bg-slate-500'
+                        }`}
+                      />
+                      <span className="text-xs font-semibold font-mono text-slate-100">
+                        {worker.worker_id}
+                      </span>
+                    </div>
+                    {worker.current_node && (
+                      <span className="text-[10px] text-indigo-300 font-mono pl-4">
+                        Executing: {worker.current_node}
+                      </span>
+                    )}
+                  </div>
+
+                  <span
+                    className={`px-2 py-0.5 text-[10px] font-bold rounded-full border uppercase tracking-wide ${
+                      isActive
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                        : 'bg-slate-800/60 text-slate-400 border-slate-700/50'
+                    }`}
+                  >
+                    {isActive ? 'ACTIVE (Processing)' : 'IDLE (Standby)'}
+                  </span>
+                </div>
+              );
+            })
+          ) : onlineWorkers.length > 0 ? (
             onlineWorkers.map((workerId, idx) => (
               <div
                 key={idx}
                 className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-indigo-500/30 transition-colors"
               >
                 <div className="flex items-center gap-2.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                  <span className="w-2 h-2 rounded-full bg-slate-500" />
                   <span className="text-xs font-semibold font-mono text-slate-200">{workerId}</span>
                 </div>
-                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wide">
-                  Online
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-800/60 text-slate-400 border border-slate-700/50 uppercase tracking-wide">
+                  IDLE (Standby)
                 </span>
               </div>
             ))
@@ -106,6 +150,7 @@ export const TelemetryPanel: React.FC<TelemetryPanelProps> = ({
             </div>
           )}
         </div>
+
       </div>
 
       <div className="grid grid-cols-2 gap-3">
