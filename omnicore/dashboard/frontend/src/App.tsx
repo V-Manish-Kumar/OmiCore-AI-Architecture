@@ -11,7 +11,15 @@ import type { ExecutionDetails, ClusterStatus, MetricsData } from './types';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<'ide' | 'topology' | 'telemetry' | 'traces' | 'graphify'>('ide');
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
+  useEffect(() => {
+    document.body.className = theme === 'dark' ? 'dark-mode' : 'light-mode';
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   const [clusterStatus, setClusterStatus] = useState<ClusterStatus>({
     online_workers: ['worker_search_node', 'worker_summarize_node'],
@@ -35,7 +43,7 @@ export function App() {
     current_dag_mermaid: '',
     passes: [],
     node_statuses: {},
-    logs: ['> Linter console ready. Enter intent query to begin compilation...'],
+    logs: ['> Console ready. Enter intent query to compile & execute pipeline.'],
     token_stats: { raw_tokens: 0, optimized_tokens: 0, savings_percentage: 0.0 },
     cost_estimation: { runtime: 0.0, cost: 0.0, tokens: 0 },
     realtime_metrics: { completed_nodes: 0, total_nodes: 0, total_tokens_processed: 0, total_tokens_saved: 0 }
@@ -110,16 +118,15 @@ export function App() {
 
   return (
     <div className="min-h-screen flex flex-col relative selection:bg-indigo-500/30 selection:text-indigo-200">
-      <div className="fixed top-10 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none -z-10" />
-      <div className="fixed bottom-10 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px] pointer-events-none -z-10" />
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-600/5 rounded-full blur-[160px] pointer-events-none -z-10" />
-
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         status={clusterStatus.status}
         activeWorkersCount={metrics.active_workers || clusterStatus.online_workers.length}
+        theme={theme}
+        toggleTheme={toggleTheme}
       />
+
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
         {activeTab === 'ide' && (
