@@ -84,25 +84,28 @@ class SymbolResolutionPass(BasePass):
 
     def _map_verb_to_capability(self, verb: str, outputs: List[str]) -> Capability:
         verb_lower = verb.lower()
-        if verb_lower == "search":
+        if verb_lower in ("search", "find", "query", "fetch"):
             return Capability.WEB_SEARCH
-        elif verb_lower == "compare":
+        elif verb_lower in ("analyze", "analising", "analyzing", "analysis"):
+            return Capability.DATA_ANALYSIS
+        elif verb_lower in ("compare", "evaluate", "contrast"):
             return Capability.COMPARISON
-        elif verb_lower == "summarize":
+        elif verb_lower in ("summarize", "synthesize", "condense"):
             return Capability.SUMMARIZATION
-        elif verb_lower == "generate":
-            if any("pdf" in o.lower() for o in outputs):
+        elif verb_lower in ("generate", "create", "make", "build", "produce"):
+            if any("pdf" in o.lower() for o in outputs) or "pdf" in verb_lower:
                 return Capability.PDF_GENERATION
             return Capability.REPORT_GENERATION
-        elif verb_lower == "write":
+        elif verb_lower in ("write", "draft"):
             return Capability.REPORT_GENERATION
-        elif verb_lower == "email":
+        elif verb_lower in ("email", "mail", "send"):
             return Capability.EMAIL
-        elif verb_lower == "extract":
+        elif verb_lower in ("extract", "parse", "scrape"):
             return Capability.RETRIEVAL
         elif verb_lower == "database_access":
             return Capability.DATABASE_ACCESS
         return Capability.REASONING
+
 
 
 class ClassifierPass(BasePass):

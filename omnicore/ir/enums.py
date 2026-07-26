@@ -15,6 +15,7 @@ class Capability(str, Enum):
     CODE_GENERATION = "code_generation"
     SUMMARIZATION = "summarization"
     COMPARISON = "comparison"
+    DATA_ANALYSIS = "data_analysis"
     TRANSLATION = "translation"
     REASONING = "reasoning"
     RETRIEVAL = "retrieval"
@@ -23,6 +24,7 @@ class Capability(str, Enum):
     PDF_GENERATION = "pdf_generation"
     DATABASE_ACCESS = "database_access"
     UNKNOWN = "unknown"
+
 
 class Complexity(str, Enum):
     SIMPLE = "Simple"

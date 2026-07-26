@@ -35,8 +35,12 @@ class MockCapabilityAdapter(CapabilityAdapter):
         elif capability == Capability.COMPARISON:
             return {"comparison": f"Mock comparison analysis based on inputs {inputs}"}
             
+        elif capability == Capability.DATA_ANALYSIS:
+            return {"analysis_results": f"Mock data analysis and context evaluation from inputs {inputs}"}
+            
         elif capability == Capability.SUMMARIZATION:
             return {"summary": f"Mock summary generated from inputs {inputs}"}
+
             
         elif capability == Capability.CODE_GENERATION:
             return {"code": f"def hello_world():\n    print('Hello World from inputs {inputs}')"}
