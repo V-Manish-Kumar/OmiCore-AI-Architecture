@@ -183,16 +183,16 @@ Access the UI at `http://127.0.0.1:8001` to experience:
 
 ## Cloud Deployment Guide
 
-OmniCore supports 1-click cloud deployments on **Vercel**, **Render**, **Railway**, **Fly.io**, and **Docker**.
+OmniCore supports cloud deployments on **Vercel** (serverless) and **Docker** (containers).
 
 ### 1. Vercel 1-Click Serverless Deployment
-OmniCore includes pre-configured [`vercel.json`](file:///c:/Users/manis/OneDrive/Documents/python/AI_taskIR/vercel.json) and ASGI serverless handler [`api/index.py`](file:///c:/Users/manis/OneDrive/Documents/python/AI_taskIR/api/index.py):
+OmniCore includes pre-configured [`vercel.json`](vercel.json) and ASGI serverless handler [`api/index.py`](api/index.py):
 1. Push repository to GitHub.
 2. Import project into Vercel (**[vercel.com/new](https://vercel.com/new)**).
 3. Vercel automatically detects `vercel.json`, builds the frontend React bundle (`dist`), and launches the Python FastAPI serverless backend!
 
 ### 2. Multi-Stage Docker Container Deployment
-For container platforms (**Render**, **Railway**, **Google Cloud Run**, **AWS App Runner**):
+For container platforms (**Railway**, **Google Cloud Run**, **AWS App Runner**):
 ```bash
 # Build production Docker image
 docker build -t omnicore-ai .
@@ -201,14 +201,10 @@ docker build -t omnicore-ai .
 docker run -d -p 8001:8001 omnicore-ai
 ```
 
-### 3. Render Blueprint Deployment
-OmniCore includes [`render.yaml`](file:///c:/Users/manis/OneDrive/Documents/python/AI_taskIR/render.yaml) for 1-click Docker web service creation on Render:
-1. Connect repository on **Render Dashboard**.
-2. Render uses `render.yaml` (`runtime: docker`) to launch the service automatically on port `8001`.
-
 ---
 
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
 

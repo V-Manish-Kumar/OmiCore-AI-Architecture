@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS ontology_edges (
 ### 4.5 Cloud Deployment Manifests
 - **Vercel**: Pre-configured via `vercel.json` routing API requests to ASGI serverless handler `api/index.py`.
 - **Docker**: Multi-stage `Dockerfile` building Node 20 React dist assets and executing FastAPI via Uvicorn on `$PORT`.
-- **Render**: Blueprint manifest `render.yaml` specifying `runtime: docker` on port `8001`.
+
 
 ### 4.6 Performance Profiling & Traces
 - All pipeline compilation and execution calls in `omnicore/dashboard/api.py` must measure phase durations (`parsing`, `optimization`, `execution`) using `shared_profiler.record_phase()` and record trace spans using `shared_tracer.start_span()` and `shared_tracer.end_span()`.
