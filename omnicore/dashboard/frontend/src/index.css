@@ -119,4 +119,54 @@
   border-radius: 9999px;
 }
 
+/* Light Mode High-Contrast Visibility Overrides */
+.light-mode .text-slate-100,
+.light-mode .text-slate-200,
+.light-mode .text-slate-300 {
+  color: #18181B !important;
+}
+
+.light-mode .text-slate-400,
+.light-mode .text-slate-500 {
+  color: #52525B !important;
+}
+
+.light-mode .bg-slate-900\/60,
+.light-mode .bg-slate-950\/50,
+.light-mode .bg-slate-950\/80,
+.light-mode .bg-slate-950\/70,
+.light-mode .bg-\[\#090E1A\]\/80,
+.light-mode .bg-\[\#090E1A\]\/60 {
+  background-color: #FFFFFF !important;
+  color: #18181B !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+.light-mode .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  color: #18181B !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.light-mode .border-white\/5,
+.light-mode .border-white\/10,
+.light-mode .border-white\/15,
+.light-mode .border-white\/20 {
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.light-mode textarea,
+.light-mode input,
+.light-mode select {
+  background-color: #FFFFFF !important;
+  color: #18181B !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+.light-mode textarea::placeholder,
+.light-mode input::placeholder {
+  color: #71717A !important;
+}
+
+
 
