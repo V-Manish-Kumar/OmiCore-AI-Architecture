@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Sparkles, Sliders } from 'lucide-react';
+import { Play, Sliders, Terminal, Bot } from 'lucide-react';
 import { askPuterGemini } from '../services/puterService';
 
 interface SandboxPanelProps {
@@ -23,7 +23,6 @@ export const SandboxPanel: React.FC<SandboxPanelProps> = ({ onRunQuery, isExecut
   const wordCount = query.trim() ? query.trim().split(/\s+/).length : 0;
   const estimatedTokens = Math.max(1, Math.round(wordCount * 1.3));
 
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim() && !isExecuting) {
@@ -32,17 +31,17 @@ export const SandboxPanel: React.FC<SandboxPanelProps> = ({ onRunQuery, isExecut
   };
 
   return (
-    <div className="liquid-glass-card rounded-3xl p-6 flex flex-col gap-5 border border-white/15 shadow-2xl relative overflow-hidden">
-      <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+    <div className="liquid-glass-card rounded-3xl p-6 flex flex-col gap-5 border border-white/10 shadow-2xl relative overflow-hidden">
+      <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-300">
-            <Sparkles className="w-4 h-4" />
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-2xl bg-indigo-500/15 border border-indigo-500/25 text-indigo-300">
+            <Terminal className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-slate-100">Natural Language Sandbox</h2>
-            <p className="text-[11px] text-slate-400">Compile prompt into Task IR & LLVM DAG</p>
+            <h2 className="text-sm font-semibold tracking-tight text-slate-100">Natural Language Intent Compiler</h2>
+            <p className="text-[11px] text-slate-400 font-medium">Lower intent text into AST & optimized execution DAG</p>
           </div>
         </div>
 
@@ -52,32 +51,32 @@ export const SandboxPanel: React.FC<SandboxPanelProps> = ({ onRunQuery, isExecut
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
         <div className="relative">
           <textarea
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             rows={3}
-            placeholder="Type your intent query here (e.g. Search Python packages and generate summary report)..."
-            className="w-full p-4 rounded-2xl bg-slate-900/60 border border-white/10 text-slate-100 text-sm placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/20 backdrop-blur-md resize-none transition-all"
+            placeholder="Enter intent query (e.g. Search Python packages and generate summary report)..."
+            className="w-full p-4 rounded-2xl bg-[#090E1A]/80 border border-white/10 text-slate-100 text-sm placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30 backdrop-blur-md resize-none font-sans transition-all"
           />
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] text-slate-400 font-medium mr-1">Presets:</span>
+          <span className="text-[11px] text-slate-400 font-medium mr-1">Sample Prompts:</span>
           {SAMPLE_PROMPTS.map((prompt, idx) => (
             <button
               key={idx}
               type="button"
               onClick={() => setQuery(prompt)}
-              className="px-3 py-1 rounded-xl text-[11px] font-medium bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-colors text-left truncate max-w-xs"
+              className="px-3 py-1 rounded-xl text-[11px] font-medium bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-colors text-left truncate max-w-xs cursor-pointer"
             >
               {prompt}
             </button>
           ))}
         </div>
 
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex items-center justify-between pt-1">
           <button
             type="button"
             onClick={async () => {
@@ -92,12 +91,12 @@ export const SandboxPanel: React.FC<SandboxPanelProps> = ({ onRunQuery, isExecut
               setIsPuterThinking(false);
             }}
             disabled={isPuterThinking || !query.trim()}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 transition-all cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-semibold bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/25 transition-all cursor-pointer disabled:opacity-50"
           >
             {isPuterThinking ? (
               <span className="w-3.5 h-3.5 rounded-full border-2 border-indigo-400/40 border-t-indigo-300 animate-spin" />
             ) : (
-              <Sparkles className="w-3.5 h-3.5" />
+              <Bot className="w-3.5 h-3.5" />
             )}
             Puter Gemini AI Assist
           </button>
@@ -124,13 +123,13 @@ export const SandboxPanel: React.FC<SandboxPanelProps> = ({ onRunQuery, isExecut
         </div>
 
         {puterAnalysis && (
-          <div className="p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-200 text-xs font-mono flex flex-col gap-1">
-            <span className="text-[10px] uppercase font-bold text-indigo-400">Puter Gemini 2.0 Flash Understanding:</span>
+          <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-200 text-xs font-mono flex flex-col gap-1">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-indigo-400">Puter Gemini 2.0 Flash Analysis:</span>
             <span>{puterAnalysis}</span>
           </div>
         )}
-
       </form>
     </div>
   );
 };
+

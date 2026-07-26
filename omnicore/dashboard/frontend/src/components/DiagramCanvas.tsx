@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { MermaidViewer } from './MermaidViewer';
-import { Network, GitBranch, Zap, Sparkles, Layers, Share2, TrendingDown, Coins } from 'lucide-react';
+import { Network, GitBranch, Zap, Cpu, Layers, Share2, TrendingDown, Coins } from 'lucide-react';
 import type { GraphifyAnalytics } from '../types';
+
 
 
 interface DiagramCanvasProps {
@@ -136,8 +137,8 @@ export const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
 
       {/* Passes Pill Indicator */}
       {passes && passes.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 py-1 px-3 rounded-xl bg-slate-900/40 border border-white/5 text-[11px] text-slate-400">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+        <div className="flex flex-wrap items-center gap-2 py-1.5 px-3 rounded-xl bg-[#090E1A]/60 border border-white/5 text-[11px] text-slate-400">
+          <Cpu className="w-3.5 h-3.5 text-indigo-400" />
           <span className="font-semibold text-slate-300">Applied Optimization Passes:</span>
           {passes.map((p, idx) => (
             <span
@@ -149,6 +150,7 @@ export const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
           ))}
         </div>
       )}
+
 
       {/* Canvas Rendering Area */}
       <div className="flex-1 rounded-2xl bg-slate-950/50 border border-white/10 overflow-hidden relative min-h-[340px] flex items-center justify-center p-2">

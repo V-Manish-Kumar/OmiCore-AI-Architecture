@@ -1,80 +1,82 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    --glass-bg: rgba(255, 255, 255, 0.08);
-    --glass-border: rgba(255, 255, 255, 0.15);
-    --glass-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.35);
-    --glass-highlight: rgba(255, 255, 255, 0.25);
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
   }
 
   body {
-    @apply bg-slate-950 text-slate-100 font-sans antialiased selection:bg-indigo-500/30 selection:text-indigo-200 overflow-x-hidden;
-    background: radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.15), transparent 40%),
-                radial-gradient(circle at 85% 25%, rgba(168, 85, 247, 0.12), transparent 40%),
-                radial-gradient(circle at 50% 80%, rgba(14, 165, 233, 0.15), transparent 50%),
-                #030712;
+    font-family: var(--font-sans);
+    @apply bg-[#070B14] text-slate-100 font-sans antialiased selection:bg-indigo-500/30 selection:text-indigo-200 overflow-x-hidden;
+    background: 
+      radial-gradient(ellipse at 20% -10%, rgba(99, 102, 241, 0.12), transparent 50%),
+      radial-gradient(ellipse at 80% 10%, rgba(139, 92, 246, 0.10), transparent 50%),
+      radial-gradient(ellipse at 50% 90%, rgba(14, 165, 233, 0.08), transparent 60%),
+      #070B14;
     min-height: 100vh;
   }
 }
 
-/* Custom Liquid Glass utilities */
+/* Premium Liquid Glass Cards */
 .liquid-glass {
-  background: rgba(15, 23, 42, 0.55);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 
-              inset 0 1px 0 rgba(255, 255, 255, 0.2),
-              inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+  background: rgba(13, 19, 33, 0.65);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 
+              inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .liquid-glass-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3),
-              inset 0 1px 1px 0 rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.015) 100%);
+  backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.35),
+              inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .liquid-glass-card:hover {
-  border-color: rgba(255, 255, 255, 0.25);
-  box-shadow: 0 12px 40px 0 rgba(99, 102, 241, 0.2),
-              inset 0 1px 1px 0 rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 16px 48px 0 rgba(99, 102, 241, 0.12),
+              inset 0 1px 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 .liquid-button {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.7) 0%, rgba(139, 92, 246, 0.7) 100%);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.85) 0%, rgba(124, 58, 237, 0.85) 100%);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4),
-              inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35),
+              inset 0 1px 0 rgba(255, 255, 255, 0.35);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .liquid-button:hover {
-  transform: translateY(-1px) scale(1.01);
-  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.6),
-              inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 28px rgba(99, 102, 241, 0.5),
+              inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .liquid-button:active {
-  transform: translateY(0) scale(0.98);
+  transform: translateY(0);
 }
 
-/* Custom scrollbars */
+/* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.2);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.25);
 }
+
