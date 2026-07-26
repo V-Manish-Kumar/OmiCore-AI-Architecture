@@ -24,7 +24,7 @@ class ASTParser:
     ]
 
     VERBS = {
-        "search": ["search", "searching", "searches", "find", "finding", "finds", "query", "querying", "retrieve", "retrieving", "look up", "looking up", "fetch", "fetching"],
+        "search": ["search", "searching", "searches", "research", "reasearch", "researching", "reasearching", "find", "finding", "finds", "query", "querying", "retrieve", "retrieving", "look up", "looking up", "fetch", "fetching"],
         "analyze": ["analyze", "analyzing", "analyzes", "analising", "analysing", "analysis", "analytics"],
         "compare": ["compare", "comparing", "compares", "evaluate", "evaluating", "contrast", "contrasting"],
         "summarize": ["summarize", "summarizing", "summarizes", "synthesize", "synthesizing", "condense", "condensing", "abstract", "abstracting"],
@@ -34,6 +34,7 @@ class ASTParser:
         "extract": ["extract", "extracting", "parse", "parsing", "scrape", "scraping"],
         "database_access": ["query database", "db search", "sql query", "fetch from database", "fetching from database"]
     }
+
 
 
     def parse(self, text: str) -> ProgramAST:
@@ -94,10 +95,11 @@ class ASTParser:
         for kw in self.CONJUNCTION_KEYWORDS:
             temp_text = re.sub(kw, "||CONJ||", temp_text, flags=re.IGNORECASE)
 
-        # Detect verb boundaries preceded by commas, "and", "by", "via", "through"
+        # Detect verb boundaries preceded by commas, "and", "by", "via", "through", "with", "using"
         for verb in all_verbs:
             temp_text = re.sub(rf",\s*(?:and\s+)?({re.escape(verb)})\b", r"||SEQ|| \1", temp_text, flags=re.IGNORECASE)
-            temp_text = re.sub(rf"\b(?:and|by|via|through)\s+({re.escape(verb)})\b", r"||SEQ|| \1", temp_text, flags=re.IGNORECASE)
+            temp_text = re.sub(rf"\b(?:and|by|via|through|with\s+help\s+of|with\s+the\s+help\s+of|with|using)\s+({re.escape(verb)})\b", r"||SEQ|| \1", temp_text, flags=re.IGNORECASE)
+
 
 
         # Replace remaining semicolons or periods with ||SEQ||

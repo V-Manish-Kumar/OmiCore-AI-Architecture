@@ -84,8 +84,9 @@ class SymbolResolutionPass(BasePass):
 
     def _map_verb_to_capability(self, verb: str, outputs: List[str]) -> Capability:
         verb_lower = verb.lower()
-        if verb_lower in ("search", "find", "query", "fetch"):
+        if verb_lower in ("search", "find", "query", "fetch", "research", "reasearch", "researching", "reasearching"):
             return Capability.WEB_SEARCH
+
         elif verb_lower in ("analyze", "analising", "analyzing", "analysis"):
             return Capability.DATA_ANALYSIS
         elif verb_lower in ("compare", "evaluate", "contrast"):
