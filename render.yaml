@@ -1,10 +1,11 @@
 services:
   - type: web
     name: omnicore-ai
-    env: docker
+    runtime: docker
     plan: free
     region: oregon
     dockerfilePath: ./Dockerfile
     envVars:
       - key: PORT
         value: 8001
+
