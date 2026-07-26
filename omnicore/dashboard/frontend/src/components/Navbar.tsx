@@ -1,9 +1,9 @@
 import React from 'react';
-import { Cpu, Activity, Zap, Layers, Sparkles } from 'lucide-react';
+import { Cpu, Activity, Zap, Layers, Sparkles, Share2 } from 'lucide-react';
 
 interface NavbarProps {
-  activeTab: 'ide' | 'topology' | 'telemetry' | 'traces';
-  setActiveTab: (tab: 'ide' | 'topology' | 'telemetry' | 'traces') => void;
+  activeTab: 'ide' | 'topology' | 'telemetry' | 'traces' | 'graphify';
+  setActiveTab: (tab: 'ide' | 'topology' | 'telemetry' | 'traces' | 'graphify') => void;
   status: string;
   activeWorkersCount: number;
 }
@@ -34,7 +34,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <nav className="flex items-center p-1 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)]">
           <button
             onClick={() => setActiveTab('ide')}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
               activeTab === 'ide'
                 ? 'bg-gradient-to-r from-indigo-600/80 to-purple-600/80 text-white shadow-[0_4px_15px_rgba(99,102,241,0.4)] border border-white/20'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -44,8 +44,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             Compiler IDE
           </button>
           <button
+            onClick={() => setActiveTab('graphify')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+              activeTab === 'graphify'
+                ? 'bg-gradient-to-r from-indigo-600/80 to-purple-600/80 text-white shadow-[0_4px_15px_rgba(99,102,241,0.4)] border border-white/20'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            Graphify Graph
+          </button>
+          <button
             onClick={() => setActiveTab('topology')}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
               activeTab === 'topology'
                 ? 'bg-gradient-to-r from-indigo-600/80 to-purple-600/80 text-white shadow-[0_4px_15px_rgba(99,102,241,0.4)] border border-white/20'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -56,7 +67,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('telemetry')}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
               activeTab === 'telemetry'
                 ? 'bg-gradient-to-r from-indigo-600/80 to-purple-600/80 text-white shadow-[0_4px_15px_rgba(99,102,241,0.4)] border border-white/20'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -67,7 +78,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('traces')}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
               activeTab === 'traces'
                 ? 'bg-gradient-to-r from-indigo-600/80 to-purple-600/80 text-white shadow-[0_4px_15px_rgba(99,102,241,0.4)] border border-white/20'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -77,6 +88,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             Profiler & Traces
           </button>
         </nav>
+
 
         {/* Live Cluster Pill */}
         <div className="flex items-center gap-3">

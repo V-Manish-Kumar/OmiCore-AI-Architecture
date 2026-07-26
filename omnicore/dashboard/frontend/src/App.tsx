@@ -6,10 +6,12 @@ import { TelemetryPanel } from './components/TelemetryPanel';
 import { TerminalLogs } from './components/TerminalLogs';
 import { TopologyEditor } from './components/TopologyEditor';
 import { TracesPanel } from './components/TracesPanel';
+import { GraphifyViewer } from './components/GraphifyViewer';
 import type { ExecutionDetails, ClusterStatus, MetricsData } from './types';
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<'ide' | 'topology' | 'telemetry' | 'traces'>('ide');
+  const [activeTab, setActiveTab] = useState<'ide' | 'topology' | 'telemetry' | 'traces' | 'graphify'>('ide');
+
 
   const [clusterStatus, setClusterStatus] = useState<ClusterStatus>({
     online_workers: ['worker_search_node', 'worker_summarize_node'],
@@ -154,7 +156,10 @@ export function App() {
           </div>
         )}
 
+        {activeTab === 'graphify' && <GraphifyViewer />}
+
         {activeTab === 'topology' && <TopologyEditor />}
+
 
         {activeTab === 'telemetry' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

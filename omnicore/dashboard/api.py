@@ -274,9 +274,18 @@ def get_metrics() -> Dict[str, Any]:
     return cluster.metrics()
 
 
+@app.get("/api/graphify_html", response_class=responses.HTMLResponse)
+def get_graphify_html():
+    graph_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "graphify-out", "graph.html")
+    if os.path.exists(graph_path):
+        with open(graph_path, "r", encoding="utf-8") as f:
+            return f.read()
+    return "<html><body style='background:#0f172a;color:#cbd5e1;font-family:sans-serif;padding:40px;'><h2>Graphify Graph HTML not found</h2><p>Run <code>/graphify</code> to generate <code>graphify-out/graph.html</code>.</p></body></html>"
+
 @app.get("/api/traces")
 def get_traces() -> List[Dict[str, Any]]:
     return [span.model_dump() for span in shared_tracer.spans]
+
 
 @app.get("/api/profiler")
 def get_profiler() -> Dict[str, Any]:
