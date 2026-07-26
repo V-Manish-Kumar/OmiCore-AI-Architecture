@@ -15,8 +15,10 @@ from omnicore.runtime.runtime import AdaptiveRuntime
 
 from omnicore.runtime.adapters.capability_adapter import MockCapabilityAdapter
 from omnicore.ir.enums import Capability
+from omnicore.cluster.resource import ResourceState
 
 app = FastAPI(title="OmniCore AI Compiler IDE", version="2.0.0")
+
 
 # Mount React dist static assets if built
 dist_dir = os.path.join(os.path.dirname(__file__), "dist")
@@ -180,6 +182,28 @@ def get_execution_status(execution_id: str) -> Dict[str, Any]:
         return {"success": False, "error": "Execution ID not found"}
     return active_executions[execution_id]
 
+def get_or_create_cluster() -> DistributedClusterManager:
+    global shared_cluster
+    if shared_cluster is None:
+        cluster = DistributedClusterManager()
+        cluster.register_worker(
+            "worker_search_node_01",
+            ResourceState(cpu_cores=8, memory_mb=16384, gpu_count=1),
+            [Capability.WEB_SEARCH, Capability.RETRIEVAL]
+        )
+        cluster.register_worker(
+            "worker_summarize_node_02",
+            ResourceState(cpu_cores=16, memory_mb=32768, gpu_count=2),
+            [Capability.SUMMARIZATION, Capability.COMPARISON, Capability.TRANSLATION, Capability.REASONING]
+        )
+        cluster.register_worker(
+            "worker_generator_node_03",
+            ResourceState(cpu_cores=8, memory_mb=16384, gpu_count=1),
+            [Capability.CODE_GENERATION, Capability.REPORT_GENERATION, Capability.PDF_GENERATION, Capability.EMAIL, Capability.DATABASE_ACCESS]
+        )
+        shared_cluster = cluster
+    return shared_cluster
+
 def wire_devtools(cluster: DistributedClusterManager, tracer: Tracer, profiler: PerformanceProfiler):
     global shared_cluster, shared_tracer, shared_profiler
     shared_cluster = cluster
@@ -188,15 +212,14 @@ def wire_devtools(cluster: DistributedClusterManager, tracer: Tracer, profiler: 
 
 @app.get("/api/status")
 def get_status() -> Dict[str, Any]:
-    if shared_cluster:
-        return shared_cluster.status()
-    return {"online_workers": [], "status": "offline", "diagnostics": {"warnings": [], "timeline": []}}
+    cluster = get_or_create_cluster()
+    return cluster.status()
 
 @app.get("/api/metrics")
 def get_metrics() -> Dict[str, Any]:
-    if shared_cluster:
-        return shared_cluster.metrics()
-    return {"active_workers": 0, "queue_depth": 0, "completed_tasks": 0, "failed_tasks": 0}
+    cluster = get_or_create_cluster()
+    return cluster.metrics()
+
 
 @app.get("/api/traces")
 def get_traces() -> List[Dict[str, Any]]:
