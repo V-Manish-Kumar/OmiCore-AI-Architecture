@@ -1,4 +1,5 @@
 import os
+import time
 from fastapi import FastAPI, responses
 from fastapi.staticfiles import StaticFiles
 from typing import Dict, Any, List, Optional
@@ -12,6 +13,7 @@ from omnicore.visualization.dag_visualizer import DAGVisualizer
 from omnicore.visualization.ast_visualizer import ASTVisualizer
 from omnicore.visualization.knowledge_graph_visualizer import KnowledgeGraphVisualizer
 from omnicore.runtime.runtime import AdaptiveRuntime
+
 
 from omnicore.runtime.adapters.capability_adapter import MockCapabilityAdapter
 from omnicore.ir.enums import Capability
@@ -56,19 +58,35 @@ async def run_pipeline_execution(execution_id: str, query: str):
         parser = IntentParser()
         optimizer = TaskOptimizer()
 
-        # Token calculations based on lexical words count
-        raw_tokens = len(query.split())
-        optimized_tokens = max(1, int(raw_tokens * 0.75))
-        savings_pct = round(((raw_tokens - optimized_tokens) / max(1, raw_tokens)) * 100.0, 1)
-
         exec_state["logs"].append("> Running Intent Analysis and Syntax Parsing...")
+        shared_tracer.start_span("SymbolResolutionPass", "Front-end Parser", {"query": query})
+        
+        t0 = time.perf_counter()
         task_ir, raw_dag = parser.compile(query)
         ast = parser.ast_parser.parse(query)
+        t_parse = time.perf_counter() - t0
+        
+        shared_profiler.record_phase("parsing", t_parse)
+        shared_tracer.end_span("SymbolResolutionPass", success=True, metadata={"parsing_seconds": round(t_parse, 4)})
+
         ast_mermaid = ASTVisualizer.visualize(ast)
 
         exec_state["logs"].append("> Running LLVM-Style Optimization passes...")
-        opt_dag, report = optimizer.optimize(task_ir, raw_dag)
+        shared_tracer.start_span("LLVMPassManager", "LLVM Optimizer")
         
+        t1 = time.perf_counter()
+        opt_dag, report = optimizer.optimize(task_ir, raw_dag)
+        t_opt = time.perf_counter() - t1
+        
+        shared_profiler.record_phase("optimization", t_opt)
+        shared_tracer.end_span("LLVMPassManager", success=True, metadata={"passes": report.optimization_passes_applied, "optimization_seconds": round(t_opt, 4)})
+
+        # Record cache hits/misses
+        if "CSEPass" in report.optimization_passes_applied or "DeadNodePruningPass" in report.optimization_passes_applied:
+            shared_profiler.record_cache_hit()
+        else:
+            shared_profiler.record_cache_miss()
+
         # Initial and Optimized DAG diagrams
         initial_dag_mermaid = DAGVisualizer.visualize(raw_dag, show_tokens=True)
         optimized_dag_mermaid = DAGVisualizer.visualize(opt_dag, show_tokens=True)
@@ -107,8 +125,8 @@ async def run_pipeline_execution(execution_id: str, query: str):
 
         exec_state["logs"].append(f"> Compiled {len(opt_dag.nodes)} optimized nodes into Knowledge Graph. Initializing Adaptive Runtime...")
 
-        # Setup runtime with simulated visual latency (e.g. 1.2s per node)
-        adapter = MockCapabilityAdapter(latency=1.2)
+        # Setup runtime with simulated visual latency (e.g. 0.8s per node)
+        adapter = MockCapabilityAdapter(latency=0.8)
         runtime = AdaptiveRuntime(adapter=adapter)
 
         # Event handler to capture node transitions
@@ -120,6 +138,7 @@ async def run_pipeline_execution(execution_id: str, query: str):
             if evt_type == "node_started":
                 exec_state["node_statuses"][nid] = "Running"
                 exec_state["logs"].append(f"> Node '{nid}' started execution using capability: {data.get('capability')}")
+                shared_tracer.start_span(f"NodeSpan_{nid}", "Task Execution", {"capability": str(data.get('capability'))})
                 if shared_cluster:
                     cap_str = str(data.get('capability'))
                     for w in shared_cluster.registry.workers.values():
@@ -134,6 +153,7 @@ async def run_pipeline_execution(execution_id: str, query: str):
                 node_tokens = 500  # standard heuristic
                 exec_state["realtime_metrics"]["total_tokens_processed"] += node_tokens
                 exec_state["logs"].append(f"> Node '{nid}' completed successfully. Outputs: {data.get('outputs')}")
+                shared_tracer.end_span(f"NodeSpan_{nid}", success=True)
                 if shared_cluster:
                     for w in shared_cluster.registry.workers.values():
                         if w.get("current_node") == nid:
@@ -142,6 +162,7 @@ async def run_pipeline_execution(execution_id: str, query: str):
             elif evt_type == "node_failed":
                 exec_state["node_statuses"][nid] = "Failed"
                 exec_state["logs"].append(f"> Node '{nid}' failed execution: {data.get('error')}")
+                shared_tracer.end_span(f"NodeSpan_{nid}", success=False, metadata={"error": data.get('error')})
                 if shared_cluster:
                     for w in shared_cluster.registry.workers.values():
                         if w.get("current_node") == nid:
@@ -158,7 +179,14 @@ async def run_pipeline_execution(execution_id: str, query: str):
         runtime.context.event_bus.subscribe("*", on_event)
 
         exec_state["logs"].append("> Dynamic runtime scheduler started...")
+        shared_tracer.start_span("AdaptiveRuntime Scheduler", "Adaptive Execution", {"nodes": len(opt_dag.nodes)})
+        
+        t2 = time.perf_counter()
         result = await runtime.execute(opt_dag, inputs={"query": query})
+        t_exec = time.perf_counter() - t2
+        
+        shared_profiler.record_phase("execution", t_exec)
+        shared_tracer.end_span("AdaptiveRuntime Scheduler", success=True, metadata={"execution_seconds": round(t_exec, 4)})
 
         if shared_cluster:
             for w in shared_cluster.registry.workers.values():
@@ -168,6 +196,7 @@ async def run_pipeline_execution(execution_id: str, query: str):
         exec_state["status"] = "completed" if result.status.value == "Completed" else "failed"
         exec_state["final_outputs"] = result.outputs
         exec_state["logs"].append(f"> Runtime execution finished with status: {result.status.value}")
+
 
 
     except Exception as e:
