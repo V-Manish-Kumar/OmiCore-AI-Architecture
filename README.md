@@ -175,11 +175,40 @@ Access the UI at `http://127.0.0.1:8001` to experience:
 - `GET /api/metrics`: Queue depth, latency, task counters, and cluster health score.
 - `GET /api/traces`: Compiler phase trace spans and duration breakdown.
 - `GET /api/profiler`: Performance profiler metrics & plan cache hit rates.
+- `GET /api/graphify_html`: Serves the interactive 3D Graphify Codebase Knowledge Graph (`graphify-out/graph.html`).
 - `POST /api/compile_sandbox`: Compiles query to AST and optimized Mermaid DAG.
 - `POST /api/compile_topology`: Validates and compiles custom node topologies.
+
+---
+
+## Cloud Deployment Guide
+
+OmniCore supports 1-click cloud deployments on **Vercel**, **Render**, **Railway**, **Fly.io**, and **Docker**.
+
+### 1. Vercel 1-Click Serverless Deployment
+OmniCore includes pre-configured [`vercel.json`](file:///c:/Users/manis/OneDrive/Documents/python/AI_taskIR/vercel.json) and ASGI serverless handler [`api/index.py`](file:///c:/Users/manis/OneDrive/Documents/python/AI_taskIR/api/index.py):
+1. Push repository to GitHub.
+2. Import project into Vercel (**[vercel.com/new](https://vercel.com/new)**).
+3. Vercel automatically detects `vercel.json`, builds the frontend React bundle (`dist`), and launches the Python FastAPI serverless backend!
+
+### 2. Multi-Stage Docker Container Deployment
+For container platforms (**Render**, **Railway**, **Google Cloud Run**, **AWS App Runner**):
+```bash
+# Build production Docker image
+docker build -t omnicore-ai .
+
+# Run container locally on port 8001
+docker run -d -p 8001:8001 omnicore-ai
+```
+
+### 3. Render Blueprint Deployment
+OmniCore includes [`render.yaml`](file:///c:/Users/manis/OneDrive/Documents/python/AI_taskIR/render.yaml) for 1-click Docker web service creation on Render:
+1. Connect repository on **Render Dashboard**.
+2. Render uses `render.yaml` (`runtime: docker`) to launch the service automatically on port `8001`.
 
 ---
 
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+

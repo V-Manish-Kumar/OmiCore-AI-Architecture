@@ -100,7 +100,16 @@ CREATE TABLE IF NOT EXISTS ontology_edges (
 ### 4.4 Dashboard UI Modifications
 1. React source code lives in `omnicore/dashboard/frontend/src/`.
 2. Build bundle with `npm run build` inside `omnicore/dashboard/frontend/` (outputs to `omnicore/dashboard/dist/`).
-3. FastAPI (`omnicore/dashboard/api.py`) automatically serves `dist/index.html` at `GET /` and mounts static assets at `/assets`.
+3. FastAPI (`omnicore/dashboard/api.py`) automatically serves `dist/index.html` at `GET /`, mounts static assets at `/assets`, and serves `graphify-out/graph.html` at `GET /api/graphify_html`.
+4. Theme mode is managed via `theme: 'dark' | 'light'` toggling `document.body.className = 'dark-mode' | 'light-mode'`.
+
+### 4.5 Cloud Deployment Manifests
+- **Vercel**: Pre-configured via `vercel.json` routing API requests to ASGI serverless handler `api/index.py`.
+- **Docker**: Multi-stage `Dockerfile` building Node 20 React dist assets and executing FastAPI via Uvicorn on `$PORT`.
+- **Render**: Blueprint manifest `render.yaml` specifying `runtime: docker` on port `8001`.
+
+### 4.6 Performance Profiling & Traces
+- All pipeline compilation and execution calls in `omnicore/dashboard/api.py` must measure phase durations (`parsing`, `optimization`, `execution`) using `shared_profiler.record_phase()` and record trace spans using `shared_tracer.start_span()` and `shared_tracer.end_span()`.
 
 ---
 
@@ -112,3 +121,4 @@ Before committing changes, ensure:
 - [ ] Sweep loops and server daemon threads stop cleanly inside `.stop()`.
 - [ ] Frontend changes are built to `omnicore/dashboard/dist` via `npm run build`.
 - [ ] All 13 test suites pass (`python -m pytest`).
+
