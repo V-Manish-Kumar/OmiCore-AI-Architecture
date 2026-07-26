@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Play, Sparkles, Sliders } from 'lucide-react';
+import { askPuterGemini } from '../services/puterService';
 
 interface SandboxPanelProps {
   onRunQuery: (query: string) => void;
@@ -8,7 +9,7 @@ interface SandboxPanelProps {
 
 const SAMPLE_PROMPTS = [
   "Search Google for ML tools and compile PDF report.",
-  "Search Python libraries, summarize findings, and generate audio.",
+  "Create pdf with reasearch help of gemini.",
   "Scrape web news articles and build summary slides."
 ];
 
@@ -16,9 +17,12 @@ export const SandboxPanel: React.FC<SandboxPanelProps> = ({ onRunQuery, isExecut
   const [query, setQuery] = useState(
     "Search Google for ML tools and compile PDF report."
   );
+  const [isPuterThinking, setIsPuterThinking] = useState(false);
+  const [puterAnalysis, setPuterAnalysis] = useState<string | null>(null);
 
   const wordCount = query.trim() ? query.trim().split(/\s+/).length : 0;
   const estimatedTokens = Math.max(1, Math.round(wordCount * 1.3));
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,7 +77,31 @@ export const SandboxPanel: React.FC<SandboxPanelProps> = ({ onRunQuery, isExecut
           ))}
         </div>
 
-        <div className="flex items-center justify-end pt-2">
+        <div className="flex items-center justify-between pt-2">
+          <button
+            type="button"
+            onClick={async () => {
+              if (!query.trim()) return;
+              setIsPuterThinking(true);
+              const geminiResult = await askPuterGemini(
+                `Rephrase and structure this task into a clean executable command pipeline for compiler execution: "${query}"`
+              );
+              if (geminiResult) {
+                setPuterAnalysis(geminiResult);
+              }
+              setIsPuterThinking(false);
+            }}
+            disabled={isPuterThinking || !query.trim()}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 transition-all cursor-pointer"
+          >
+            {isPuterThinking ? (
+              <span className="w-3.5 h-3.5 rounded-full border-2 border-indigo-400/40 border-t-indigo-300 animate-spin" />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5" />
+            )}
+            Puter Gemini AI Assist
+          </button>
+
           <button
             type="submit"
             disabled={isExecuting || !query.trim()}
@@ -94,6 +122,14 @@ export const SandboxPanel: React.FC<SandboxPanelProps> = ({ onRunQuery, isExecut
             )}
           </button>
         </div>
+
+        {puterAnalysis && (
+          <div className="p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-200 text-xs font-mono flex flex-col gap-1">
+            <span className="text-[10px] uppercase font-bold text-indigo-400">Puter Gemini 2.0 Flash Understanding:</span>
+            <span>{puterAnalysis}</span>
+          </div>
+        )}
+
       </form>
     </div>
   );
