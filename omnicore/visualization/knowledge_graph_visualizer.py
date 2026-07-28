@@ -56,7 +56,7 @@ class KnowledgeGraphVisualizer:
         lines = ["graph TD"]
         
         # 1. Intent Root Node
-        intent_label = f"🎯 User Intent: {task_ir.primary_intent.value.upper()}"
+        intent_label = f"User Intent: {task_ir.primary_intent.value.upper()}"
         lines.append(f'  INTENT["{intent_label}"]')
         
         # 2. Add Capability Nodes & Data Entity Nodes
@@ -67,7 +67,7 @@ class KnowledgeGraphVisualizer:
             cap_id = f"CAP_{node.node_id}"
             cap_node_ids.append(cap_id)
             tokens = getattr(node, "estimated_tokens", 500) or 500
-            cap_label = f"⚡ Capability: {node.capability.value}<br/>[Tokens: {tokens} | {node.estimated_time}s]"
+            cap_label = f"Capability: {node.capability.value}<br/>[Tokens: {tokens} | {node.estimated_time}s]"
             lines.append(f'  {cap_id}["{cap_label}"]')
             
             # Connect Intent to Capability
@@ -81,7 +81,7 @@ class KnowledgeGraphVisualizer:
                 inp_clean = str(inp).replace('"', "'")
                 ent_id = f"ENT_IN_{hash(inp_clean) & 0xffff}"
                 if ent_id not in added_entities:
-                    lines.append(f'  {ent_id}["📄 Input Data: {inp_clean}"]')
+                    lines.append(f'  {ent_id}["Input Data: {inp_clean}"]')
                     added_entities.add(ent_id)
                 lines.append(f'  {ent_id} -->|":CONSUMES"| {cap_id}')
                 
@@ -93,16 +93,16 @@ class KnowledgeGraphVisualizer:
                 out_clean = str(out).replace('"', "'")
                 ent_id = f"ENT_OUT_{hash(out_clean) & 0xffff}"
                 if ent_id not in added_entities:
-                    lines.append(f'  {ent_id}["📊 Output Artifact: {out_clean}"]')
+                    lines.append(f'  {ent_id}["Output Artifact: {out_clean}"]')
                     added_entities.add(ent_id)
                 lines.append(f'  {cap_id} -->|":PRODUCES"| {ent_id}')
-
+ 
         # 3. Token Analytics & Graphify Savings Summary Node
         savings_label = (
-            f'💡 Graphify Token Analytics<br/>'
-            f'⚡ Baseline Est: {analytics["estimated_baseline_tokens"]:,} tokens<br/>'
-            f'🔥 Our Actual Usage: {analytics["our_actual_tokens"]:,} tokens<br/>'
-            f'✨ Tokens Saved: {analytics["tokens_saved"]:,} ({analytics["savings_percentage"]}% Saved)'
+            f'Graphify Token Analytics<br/>'
+            f'Baseline Est: {analytics["estimated_baseline_tokens"]:,} tokens<br/>'
+            f'Our Actual Usage: {analytics["our_actual_tokens"]:,} tokens<br/>'
+            f'Tokens Saved: {analytics["tokens_saved"]:,} ({analytics["savings_percentage"]}% Saved)'
         )
         lines.append(f'  SAVINGS["{savings_label}"]')
         lines.append(f'  INTENT -.->|":OPTIMIZED_BY"| SAVINGS')
