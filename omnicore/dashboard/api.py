@@ -247,7 +247,7 @@ def get_or_create_cluster() -> DistributedClusterManager:
         cluster.register_worker(
             "worker_summarize_node_02",
             ResourceState(cpu_cores=16, memory_mb=32768, gpu_count=2),
-            [Capability.SUMMARIZATION, Capability.COMPARISON, Capability.TRANSLATION, Capability.REASONING]
+            [Capability.SUMMARIZATION, Capability.COMPARISON, Capability.DATA_ANALYSIS, Capability.TRANSLATION, Capability.REASONING]
         )
         cluster.register_worker(
             "worker_generator_node_03",

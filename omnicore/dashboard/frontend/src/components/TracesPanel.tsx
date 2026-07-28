@@ -28,104 +28,94 @@ export const TracesPanel: React.FC = () => {
   }, []);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
       <div className="lg:col-span-6 flex flex-col gap-5">
-        <div className="liquid-glass-card rounded-3xl p-5 border border-white/15 shadow-2xl flex flex-col gap-4">
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-purple-500/20 border border-purple-500/30 text-purple-300">
+        <section className="panel p-5 flex flex-col gap-4">
+          <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="icon-tile">
                 <BarChart2 className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="text-sm font-bold text-slate-100">Performance Profiler Report</h2>
-                <p className="text-[11px] text-slate-400">Compilation phase timing metrics & caching</p>
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Profiler</h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Phase timings and plan cache</p>
               </div>
             </div>
 
-            <button
-              onClick={fetchData}
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 transition-colors"
-            >
+            <button type="button" onClick={fetchData} className="btn-secondary p-2" aria-label="Refresh">
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-1">
-              <span className="text-[11px] text-slate-400">Avg Parsing Duration</span>
-              <span className="text-xl font-bold font-mono text-indigo-300">
-                {profilerReport?.phase_metrics?.average_parsing_seconds
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              {
+                label: 'Avg parsing',
+                value: profilerReport?.phase_metrics?.average_parsing_seconds
                   ? `${profilerReport.phase_metrics.average_parsing_seconds.toFixed(4)}s`
-                  : '0.000s'}
-              </span>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-1">
-              <span className="text-[11px] text-slate-400">Avg Optimization Duration</span>
-              <span className="text-xl font-bold font-mono text-purple-300">
-                {profilerReport?.phase_metrics?.average_optimization_seconds
+                  : '0.000s'
+              },
+              {
+                label: 'Avg optimization',
+                value: profilerReport?.phase_metrics?.average_optimization_seconds
                   ? `${profilerReport.phase_metrics.average_optimization_seconds.toFixed(4)}s`
-                  : '0.000s'}
-              </span>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-1">
-              <span className="text-[11px] text-slate-400">Plan Cache Hits</span>
-              <span className="text-xl font-bold font-mono text-emerald-400">
-                {profilerReport?.caching?.hits ?? 0}
-              </span>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-1">
-              <span className="text-[11px] text-slate-400">Cache Hit Rate</span>
-              <span className="text-xl font-bold font-mono text-emerald-400">
-                {profilerReport?.caching?.hit_rate
+                  : '0.000s'
+              },
+              { label: 'Cache hits', value: String(profilerReport?.caching?.hits ?? 0) },
+              {
+                label: 'Hit rate',
+                value: profilerReport?.caching?.hit_rate
                   ? `${(profilerReport.caching.hit_rate * 100).toFixed(1)}%`
-                  : '0.0%'}
-              </span>
-            </div>
+                  : '0.0%'
+              }
+            ].map(({ label, value }) => (
+              <div key={label} className="panel-muted p-3 flex flex-col gap-0.5">
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">{label}</span>
+                <span className="text-lg font-semibold font-mono tabular-nums text-zinc-900 dark:text-zinc-100">
+                  {value}
+                </span>
+              </div>
+            ))}
           </div>
-        </div>
+        </section>
       </div>
 
       <div className="lg:col-span-6 flex flex-col gap-5">
-        <div className="liquid-glass-card rounded-3xl p-5 border border-white/15 shadow-2xl flex flex-col gap-4 min-h-[340px]">
-          <div className="flex items-center gap-2.5 border-b border-white/10 pb-3">
-            <div className="p-2 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-300">
+        <section className="panel p-5 flex flex-col gap-4 min-h-[320px]">
+          <div className="flex items-center gap-3 border-b border-zinc-200 dark:border-zinc-800 pb-3">
+            <div className="icon-tile">
               <Zap className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-100">Compiler Telemetry Traces</h2>
-              <p className="text-[11px] text-slate-400">Execution span logs & phase details</p>
+              <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Trace spans</h3>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Recent compilation and execution spans</p>
             </div>
           </div>
 
-          <div className="flex flex-col gap-2.5 max-h-[280px] overflow-y-auto pr-1">
+          <div className="flex flex-col gap-1.5 max-h-[280px] overflow-y-auto">
             {traces && traces.length > 0 ? (
               traces.map((span, idx) => (
                 <div
                   key={idx}
-                  className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-xs"
+                  className="panel-muted px-3 py-2.5 flex items-center justify-between text-xs"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <div>
-                      <div className="font-bold text-slate-200">{span.name}</div>
-                      <div className="text-[10px] text-slate-400 font-mono">Phase: {span.phase}</div>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400 shrink-0" />
+                    <div className="min-w-0">
+                      <div className="font-medium text-zinc-900 dark:text-zinc-200 truncate">{span.name}</div>
+                      <div className="text-[11px] text-zinc-500 font-mono">Phase: {span.phase}</div>
                     </div>
                   </div>
-                  <span className="font-mono text-xs font-bold text-indigo-300 bg-indigo-500/10 px-2.5 py-1 rounded-xl border border-indigo-500/20">
+                  <span className="font-mono text-[11px] tabular-nums text-zinc-600 dark:text-zinc-300 shrink-0 ml-2">
                     {span.duration_ms ? `${span.duration_ms}ms` : '0ms'}
                   </span>
                 </div>
               ))
             ) : (
-              <div className="p-8 text-center text-xs text-slate-400 bg-white/5 rounded-2xl border border-white/5">
-                No active execution spans logged yet.
-              </div>
+              <p className="text-xs text-zinc-500 text-center py-8 panel-muted rounded-lg">No spans recorded yet.</p>
             )}
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );

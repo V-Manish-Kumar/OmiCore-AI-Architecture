@@ -166,6 +166,9 @@ Access the UI at `http://127.0.0.1:8001` to experience:
 - **Telemetry & Worker Pools**: Live cost projection cards, token reduction statistics, and active cluster worker monitor status cards.
 - **Terminal Console**: macOS-style glowing execution log stream with status indicators and log controls.
 - **Traces & Performance Profiler**: Performance report gauges detailing parsing and optimization phase durations alongside plan cache hit rates.
+- **Premium UI Features**:
+  - **Liquid Glass Navigation**: macOS/iOS-style navigation rails and tab selectors featuring frosted glass overlays (`backdrop-filter: blur(24px) saturate(180%)`), inner glow highlights, and floating glossy active pills.
+  - **Cross-Browser Theme Contrast**: Robust light and dark theme text styles tested across Chrome and Brave, ensuring no text gets hidden even when system dark mode clashes with browser settings.
 
 ### REST API Summary
 - `GET /`: Serves the React Liquid Glass Single Page Application.

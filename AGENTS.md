@@ -101,7 +101,9 @@ CREATE TABLE IF NOT EXISTS ontology_edges (
 1. React source code lives in `omnicore/dashboard/frontend/src/`.
 2. Build bundle with `npm run build` inside `omnicore/dashboard/frontend/` (outputs to `omnicore/dashboard/dist/`).
 3. FastAPI (`omnicore/dashboard/api.py`) automatically serves `dist/index.html` at `GET /`, mounts static assets at `/assets`, and serves `graphify-out/graph.html` at `GET /api/graphify_html`.
-4. Theme mode is managed via `theme: 'dark' | 'light'` toggling `document.body.className = 'dark-mode' | 'light-mode'`.
+4. Theme mode is managed via `theme: 'dark' | 'light'` toggling classes (`.dark`, `.dark-mode` / `.light`, `.light-mode`) on both `document.documentElement` and `document.body` to support class-based Tailwind styling and custom glass overrides.
+5. Navigation rails, tab selectors, and segment controls must use iOS/macOS liquid glassmorphism styling (`backdrop-filter: blur(24px) saturate(180%)`) with floating glossy active pills.
+6. Force light-mode text elements (white, light gray, slate) to dark black (`#09090b` / `#18181b`) to ensure readability across all browsers when system dark mode is active.
 
 ### 4.5 Cloud Deployment Manifests
 - **Vercel**: Pre-configured via `vercel.json` routing API requests to ASGI serverless handler `api/index.py`.

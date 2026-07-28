@@ -39,6 +39,8 @@ class SymbolResolutionPass(BasePass):
                 if not outputs:
                     if capability == Capability.WEB_SEARCH:
                         outputs = ["findings"]
+                    elif capability == Capability.DATA_ANALYSIS:
+                        outputs = ["analysis"]
                     elif capability == Capability.COMPARISON:
                         outputs = ["comparison"]
                     elif capability == Capability.SUMMARIZATION:
@@ -50,15 +52,39 @@ class SymbolResolutionPass(BasePass):
                     else:
                         outputs = [f"{unique_id}_out"]
                 
-                if not inputs:
-                    if capability == Capability.COMPARISON:
-                        inputs = ["findings"]
+                    if capability == Capability.DATA_ANALYSIS:
+                        if context.symbol_table.lookup("findings"):
+                            inputs = ["findings"]
+                        else:
+                            inputs = ["data"]
+                    elif capability == Capability.COMPARISON:
+                        if context.symbol_table.lookup("analysis"):
+                            inputs = ["analysis"]
+                        else:
+                            inputs = ["findings"]
                     elif capability == Capability.SUMMARIZATION:
-                        inputs = ["comparison"]
-                    elif capability == Capability.PDF_GENERATION:
-                        inputs = ["summary"]
+                        if context.symbol_table.lookup("analysis"):
+                            inputs = ["analysis"]
+                        elif context.symbol_table.lookup("comparison"):
+                            inputs = ["comparison"]
+                        else:
+                            inputs = ["findings"]
+                    elif capability in (Capability.PDF_GENERATION, Capability.REPORT_GENERATION):
+                        if context.symbol_table.lookup("summary"):
+                            inputs = ["summary"]
+                        elif context.symbol_table.lookup("findings"):
+                            inputs = ["findings"]
+                        elif context.symbol_table.lookup("comparison"):
+                            inputs = ["comparison"]
+                        else:
+                            inputs = ["summary"]
                     elif capability == Capability.EMAIL:
-                        inputs = ["summary"]
+                        if context.symbol_table.lookup("pdf"):
+                            inputs = ["pdf"]
+                        elif context.symbol_table.lookup("summary"):
+                            inputs = ["summary"]
+                        else:
+                            inputs = ["summary"]
 
                 # Store node id and mapping
                 node_metadata[id(node)] = {
@@ -98,6 +124,8 @@ class SymbolResolutionPass(BasePass):
                 return Capability.PDF_GENERATION
             return Capability.REPORT_GENERATION
         elif verb_lower in ("write", "draft"):
+            if any("pdf" in o.lower() for o in outputs) or "pdf" in verb_lower:
+                return Capability.PDF_GENERATION
             return Capability.REPORT_GENERATION
         elif verb_lower in ("email", "mail", "send"):
             return Capability.EMAIL

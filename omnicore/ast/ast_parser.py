@@ -126,7 +126,75 @@ class ASTParser:
                     segments.append((cleaned, current_connector))
                     current_connector = "sequence"
 
-        return segments
+        # Check for multi-intent AI dynamic decomposition if single segment returned
+        if len(segments) == 1:
+            decomposed = self._decompose_implicit_pipeline(segments[0][0])
+            if decomposed and len(decomposed) > 1:
+                return [(s, "sequence") for s in decomposed]
+
+        # Expand multi-segment pipelines where retrieval leads into summary/pdf generation
+        expanded_segments: List[Tuple[str, str]] = []
+        for i, (seg_text, conn) in enumerate(segments):
+            seg_lower = seg_text.lower()
+            if i > 0 and expanded_segments:
+                prev_text = expanded_segments[-1][0].lower()
+                prev_is_retrieval = any(k in prev_text for k in ["search", "research", "find", "query", "fetch", "google"])
+                curr_is_generation = any(k in seg_lower for k in ["pdf", "write", "generate", "create", "email"])
+                curr_is_synthesis = any(k in seg_lower for k in ["summarize", "analyze", "compare", "synthesize"])
+                mentions_summary = any(k in seg_lower for k in ["summary", "pdf summary", "information", "analysis"])
+
+                if prev_is_retrieval and curr_is_generation and mentions_summary and not curr_is_synthesis:
+                    synthesis_seg = "summarize research findings"
+                    if "compare" in seg_lower or "vs" in seg_lower:
+                        synthesis_seg = "compare research findings"
+                    elif "analyze" in seg_lower:
+                        synthesis_seg = "analyze research findings"
+                    expanded_segments.append((synthesis_seg, "sequence"))
+
+            expanded_segments.append((seg_text, conn))
+
+        return expanded_segments
+
+    def _decompose_implicit_pipeline(self, text: str) -> List[str]:
+        """
+        Dynamically decomposes a single prompt string containing implicit multi-step goals
+        (e.g., retrieval + synthesis + document generation) into ordered execution segments.
+        """
+        text_lower = text.lower()
+
+        # Check for retrieval intents
+        has_retrieval = any(k in text_lower for k in ["search", "research", "find", "query", "fetch", "retrieve", "google"])
+        # Check for synthesis/analysis intents
+        has_synthesis = any(k in text_lower for k in ["information", "info", "summarize", "analyze", "compare", "findings", "details"])
+        # Check for generation/delivery intents
+        has_generation = any(k in text_lower for k in ["pdf", "report", "create", "generate", "write", "email", "document"])
+
+        # If prompt specifies both retrieval and document/generation outputs
+        if has_retrieval and has_generation:
+            # Extract topic/query subject
+            # Remove high-level verbs to isolate subject
+            clean_text = text
+            clean_text = re.sub(r"\b(?:create|generate|write|make|build|produce)\s+(?:a|an)?\s*(?:pdf|report|document|summary)?\s*(?:that|which)?\s*(?:contains|includes|has)?", "", clean_text, flags=re.IGNORECASE)
+
+            # Build pipeline phases: Retrieval -> Data Analysis -> Summarization -> Generation
+            retrieval_seg = f"search {clean_text.strip()}" if not clean_text.lower().startswith(("search", "find", "query")) else clean_text.strip()
+            
+            analysis_seg = "analyze research data"
+            synthesis_seg = "summarize information"
+            if "compare" in text_lower or "vs" in text_lower:
+                synthesis_seg = "compare research findings"
+
+            generation_seg = "create a pdf"
+            if "pdf" in text_lower:
+                generation_seg = "create a pdf"
+            elif "email" in text_lower:
+                generation_seg = "send email report"
+            elif "report" in text_lower:
+                generation_seg = "write a report"
+
+            return [retrieval_seg, analysis_seg, synthesis_seg, generation_seg]
+
+        return [text]
 
     def _parse_segment(self, segment: str) -> CommandNode:
         """
@@ -136,15 +204,17 @@ class ASTParser:
         action_verb = "execute"
         matched_category = "execute"
 
-        # Find action verb
+        # Find action verb by selecting the match that appears earliest in the segment text
+        best_match_pos = float('inf')
         for category, synonyms in self.VERBS.items():
             for syn in synonyms:
-                if seg_lower.startswith(syn) or re.search(rf"\b{syn}\b", seg_lower):
-                    action_verb = syn
-                    matched_category = category
-                    break
-            if action_verb != "execute":
-                break
+                match = re.search(rf"\b{re.escape(syn)}\b", seg_lower)
+                if match:
+                    pos = match.start()
+                    if pos < best_match_pos:
+                        best_match_pos = pos
+                        action_verb = syn
+                        matched_category = category
 
         # Remove the verb from target to isolate the object of action
         target = segment

@@ -9,12 +9,31 @@ import { TracesPanel } from './components/TracesPanel';
 import { GraphifyViewer } from './components/GraphifyViewer';
 import type { ExecutionDetails, ClusterStatus, MetricsData } from './types';
 
+const TAB_TITLES: Record<string, string> = {
+  ide: 'Compiler',
+  graphify: 'Graphify',
+  topology: 'Topology',
+  telemetry: 'Telemetry',
+  traces: 'Traces'
+};
+
 export function App() {
   const [activeTab, setActiveTab] = useState<'ide' | 'topology' | 'telemetry' | 'traces' | 'graphify'>('ide');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   useEffect(() => {
-    document.body.className = theme === 'dark' ? 'dark-mode' : 'light-mode';
+    const isDark = theme === 'dark';
+    if (isDark) {
+      document.documentElement.classList.add('dark', 'dark-mode');
+      document.documentElement.classList.remove('light', 'light-mode');
+      document.body.classList.add('dark', 'dark-mode');
+      document.body.classList.remove('light', 'light-mode');
+    } else {
+      document.documentElement.classList.add('light', 'light-mode');
+      document.documentElement.classList.remove('dark', 'dark-mode');
+      document.body.classList.add('light', 'light-mode');
+      document.body.classList.remove('dark', 'dark-mode');
+    }
   }, [theme]);
 
   const toggleTheme = () => {
@@ -117,7 +136,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative selection:bg-indigo-500/30 selection:text-indigo-200">
+    <div className="min-h-screen flex flex-col">
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -127,11 +146,43 @@ export function App() {
         toggleTheme={toggleTheme}
       />
 
+      <main className="flex-1 max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-5 sm:py-6 space-y-5">
+        <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-1">
+          <div>
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+              {TAB_TITLES[activeTab]}
+            </h2>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
+              {activeTab === 'ide' && 'Compile intent queries and monitor pipeline execution.'}
+              {activeTab === 'graphify' && 'Codebase knowledge graph from Graphify output.'}
+              {activeTab === 'topology' && 'Build and validate custom task DAGs.'}
+              {activeTab === 'telemetry' && 'Runtime metrics and cluster worker status.'}
+              {activeTab === 'traces' && 'Profiler timings and distributed trace spans.'}
+            </p>
+          </div>
+          {activeTab === 'ide' && (
+            <dl className="flex gap-4 text-sm">
+              <div>
+                <dt className="text-zinc-500 dark:text-zinc-400 text-xs">Queue</dt>
+                <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-100">{metrics.queue_depth}</dd>
+              </div>
+              <div>
+                <dt className="text-zinc-500 dark:text-zinc-400 text-xs">Workers</dt>
+                <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-100">
+                  {clusterStatus.online_workers.length}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-zinc-500 dark:text-zinc-400 text-xs">Tasks done</dt>
+                <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-100">{metrics.completed_tasks}</dd>
+              </div>
+            </dl>
+          )}
+        </header>
 
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
         {activeTab === 'ide' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            <div className="lg:col-span-8 flex flex-col gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            <div className="lg:col-span-8 flex flex-col gap-5">
               <SandboxPanel onRunQuery={handleRunQuery} isExecuting={isExecuting} />
               <DiagramCanvas
                 astMermaid={executionDetails.ast_mermaid}
@@ -152,7 +203,7 @@ export function App() {
               />
             </div>
 
-            <div className="lg:col-span-4 flex flex-col gap-6">
+            <div className="lg:col-span-4 flex flex-col gap-5">
               <TelemetryPanel
                 costEstimation={executionDetails.cost_estimation}
                 tokenStats={executionDetails.token_stats}
@@ -167,9 +218,8 @@ export function App() {
 
         {activeTab === 'topology' && <TopologyEditor />}
 
-
         {activeTab === 'telemetry' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
             <div className="lg:col-span-5">
               <TelemetryPanel
                 costEstimation={executionDetails.cost_estimation}
@@ -179,10 +229,7 @@ export function App() {
               />
             </div>
             <div className="lg:col-span-7">
-              <TerminalLogs
-                logs={executionDetails.logs}
-                status={executionDetails.status}
-              />
+              <TerminalLogs logs={executionDetails.logs} status={executionDetails.status} />
             </div>
           </div>
         )}
@@ -190,8 +237,8 @@ export function App() {
         {activeTab === 'traces' && <TracesPanel />}
       </main>
 
-      <footer className="w-full py-4 border-t border-white/10 text-center text-xs text-slate-500 backdrop-blur-md">
-        OmniCore AI Compiler Dashboard &bull; Liquid Glass UI Edition &bull; Provider-Agnostic Distributed Engine
+      <footer className="mt-auto py-3 px-4 border-t border-zinc-200 dark:border-zinc-800 text-center text-xs text-zinc-500 dark:text-zinc-500">
+        OmniCore · Task IR compiler & distributed runtime
       </footer>
     </div>
   );

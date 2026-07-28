@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Sliders, Terminal, Bot } from 'lucide-react';
+import { Play, Terminal, Bot } from 'lucide-react';
 import { askPuterGemini } from '../services/puterService';
 
 interface SandboxPanelProps {
@@ -8,15 +8,13 @@ interface SandboxPanelProps {
 }
 
 const SAMPLE_PROMPTS = [
-  "Search Google for ML tools and compile PDF report.",
-  "Create pdf with reasearch help of gemini.",
-  "Scrape web news articles and build summary slides."
+  'Search Google for ML tools and compile PDF report.',
+  'Create pdf with research help of gemini.',
+  'Scrape web news articles and build summary slides.'
 ];
 
 export const SandboxPanel: React.FC<SandboxPanelProps> = ({ onRunQuery, isExecuting }) => {
-  const [query, setQuery] = useState(
-    "Search Google for ML tools and compile PDF report."
-  );
+  const [query, setQuery] = useState('Search Google for ML tools and compile PDF report.');
   const [isPuterThinking, setIsPuterThinking] = useState(false);
   const [puterAnalysis, setPuterAnalysis] = useState<string | null>(null);
 
@@ -31,52 +29,48 @@ export const SandboxPanel: React.FC<SandboxPanelProps> = ({ onRunQuery, isExecut
   };
 
   return (
-    <div className="liquid-glass-card rounded-3xl p-6 flex flex-col gap-5 border border-white/10 shadow-2xl relative overflow-hidden">
-      <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="flex items-center justify-between">
+    <section className="panel p-5 flex flex-col gap-4">
+      <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-indigo-500/15 border border-indigo-500/25 text-indigo-300">
+          <div className="icon-tile">
             <Terminal className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold tracking-tight text-slate-100">Natural Language Intent Compiler</h2>
-            <p className="text-[11px] text-slate-400 font-medium">Lower intent text into AST & optimized execution DAG</p>
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Intent query</h3>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+              Parsed to AST, optimized DAG, then scheduled on the cluster.
+            </p>
           </div>
         </div>
-
-        <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-slate-300 text-xs font-mono">
-          <Sliders className="w-3.5 h-3.5 text-indigo-400" />
-          <span>{wordCount} words (~{estimatedTokens} tokens)</span>
-        </div>
+        <span className="text-xs font-mono text-zinc-500 dark:text-zinc-400 tabular-nums shrink-0">
+          ~{estimatedTokens} tokens
+        </span>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
-        <div className="relative">
-          <textarea
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            rows={3}
-            placeholder="Enter intent query (e.g. Search Python packages and generate summary report)..."
-            className="w-full p-4 rounded-2xl bg-[#090E1A]/80 border border-white/10 text-slate-100 text-sm placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30 backdrop-blur-md resize-none font-sans transition-all"
-          />
-        </div>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <textarea
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          rows={3}
+          placeholder="Describe the task you want compiled and executed…"
+          className="w-full px-3 py-2.5 rounded-lg text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 resize-none transition-shadow"
+        />
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] text-slate-400 font-medium mr-1">Sample Prompts:</span>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">Examples</span>
           {SAMPLE_PROMPTS.map((prompt, idx) => (
             <button
               key={idx}
               type="button"
               onClick={() => setQuery(prompt)}
-              className="px-3 py-1 rounded-xl text-[11px] font-medium bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-colors text-left truncate max-w-xs cursor-pointer"
+              className="px-2.5 py-1 rounded-md text-xs text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-transparent hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors truncate max-w-[240px] cursor-pointer"
             >
               {prompt}
             </button>
           ))}
         </div>
 
-        <div className="flex items-center justify-between pt-1">
+        <div className="flex items-center justify-end gap-2 pt-1">
           <button
             type="button"
             onClick={async () => {
@@ -91,45 +85,38 @@ export const SandboxPanel: React.FC<SandboxPanelProps> = ({ onRunQuery, isExecut
               setIsPuterThinking(false);
             }}
             disabled={isPuterThinking || !query.trim()}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-semibold bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/25 transition-all cursor-pointer disabled:opacity-50"
+            className="btn-secondary disabled:opacity-50"
           >
             {isPuterThinking ? (
-              <span className="w-3.5 h-3.5 rounded-full border-2 border-indigo-400/40 border-t-indigo-300 animate-spin" />
+              <span className="w-3.5 h-3.5 rounded-full border-2 border-zinc-300 border-t-zinc-600 dark:border-zinc-600 dark:border-t-zinc-300 animate-spin" />
             ) : (
               <Bot className="w-3.5 h-3.5" />
             )}
-            Puter Gemini AI Assist
+            Refine
           </button>
 
-          <button
-            type="submit"
-            disabled={isExecuting || !query.trim()}
-            className={`liquid-button flex items-center gap-2.5 px-6 py-2.5 rounded-2xl text-xs font-bold text-white transition-all ${
-              isExecuting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-            }`}
-          >
+          <button type="submit" disabled={isExecuting || !query.trim()} className="btn-primary">
             {isExecuting ? (
               <>
-                <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-                Compiling & Scheduling...
+                <span className="w-3.5 h-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                Running…
               </>
             ) : (
               <>
-                <Play className="w-4 h-4 fill-white" />
-                Compile & Run Execution
+                <Play className="w-3.5 h-3.5 fill-current" />
+                Compile & run
               </>
             )}
           </button>
         </div>
 
         {puterAnalysis && (
-          <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-200 text-xs font-mono flex flex-col gap-1">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-indigo-400">Puter Gemini 2.0 Flash Analysis:</span>
-            <span>{puterAnalysis}</span>
+          <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/20 text-zinc-700 dark:text-zinc-200 text-xs leading-relaxed">
+            <p className="text-[11px] font-medium text-blue-600 dark:text-blue-400 mb-1">Refined brief</p>
+            <p className="font-mono text-[11px]">{puterAnalysis}</p>
           </div>
         )}
       </form>
-    </div>
+    </section>
   );
 };
-

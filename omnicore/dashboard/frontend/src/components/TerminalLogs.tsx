@@ -7,54 +7,60 @@ interface TerminalLogsProps {
   onClearLogs?: () => void;
 }
 
+const statusBadge: Record<string, { className: string; label: string; icon: React.ReactNode }> = {
+  compiling: {
+    className: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
+    label: 'Compiling',
+    icon: <Loader2 className="w-3 h-3 animate-spin" />
+  },
+  running: {
+    className: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',
+    label: 'Running',
+    icon: <Loader2 className="w-3 h-3 animate-spin" />
+  },
+  completed: {
+    className: 'bg-green-500/10 text-green-700 dark:text-green-400',
+    label: 'Done',
+    icon: <CheckCircle2 className="w-3 h-3" />
+  },
+  failed: {
+    className: 'bg-red-500/10 text-red-700 dark:text-red-400',
+    label: 'Failed',
+    icon: <AlertCircle className="w-3 h-3" />
+  }
+};
+
 export const TerminalLogs: React.FC<TerminalLogsProps> = ({ logs, status = 'idle', onClearLogs }) => {
   const terminalEndRef = useRef<HTMLDivElement>(null);
+  const badge = status !== 'idle' ? statusBadge[status] : null;
 
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs]);
 
   return (
-    <div className="liquid-glass-card rounded-3xl p-5 border border-white/15 shadow-2xl flex flex-col gap-3 min-h-[220px]">
-      {/* Terminal Header */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-3">
+    <section className="panel p-5 flex flex-col gap-3 min-h-[200px]">
+      <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
         <div className="flex items-center gap-2">
-          <TerminalIcon className="w-4 h-4 text-emerald-400" />
-          <h3 className="text-xs font-bold font-mono text-slate-200">Linter Console & Execution Logs</h3>
+          <TerminalIcon className="w-4 h-4 text-zinc-500" />
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Console</h3>
         </div>
 
-        {/* Status Pill & Clear */}
         <div className="flex items-center gap-2">
-          {status === 'compiling' && (
-            <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold uppercase tracking-wider">
-              <Loader2 className="w-3 h-3 animate-spin text-indigo-400" />
-              Compiling
+          {badge && (
+            <span
+              className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium ${badge.className}`}
+            >
+              {badge.icon}
+              {badge.label}
             </span>
           )}
-          {status === 'running' && (
-            <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold uppercase tracking-wider">
-              <Loader2 className="w-3 h-3 animate-spin text-amber-400" />
-              Running DAG
-            </span>
-          )}
-          {status === 'completed' && (
-            <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider">
-              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-              Completed
-            </span>
-          )}
-          {status === 'failed' && (
-            <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-bold uppercase tracking-wider">
-              <AlertCircle className="w-3 h-3 text-rose-400" />
-              Failed
-            </span>
-          )}
-
           {onClearLogs && (
             <button
+              type="button"
               onClick={onClearLogs}
-              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/10 transition-colors"
-              title="Clear Console"
+              className="p-1.5 rounded-md text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              title="Clear console"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -62,30 +68,28 @@ export const TerminalLogs: React.FC<TerminalLogsProps> = ({ logs, status = 'idle
         </div>
       </div>
 
-      {/* Terminal Code Content */}
-      <div className="flex-1 bg-slate-950/80 rounded-2xl p-4 border border-white/10 font-mono text-xs overflow-y-auto max-h-[220px] flex flex-col gap-1.5 leading-relaxed selection:bg-emerald-500/30">
+      <div className="console-surface flex-1 p-3 text-xs overflow-y-auto max-h-[220px] flex flex-col gap-1 leading-relaxed">
         {logs && logs.length > 0 ? (
           logs.map((log, index) => {
-            let textColor = 'text-slate-300';
-            if (log.includes('ERROR') || log.includes('failed')) textColor = 'text-rose-400 font-semibold';
-            else if (log.includes('completed successfully') || log.includes('COMPLETED')) textColor = 'text-emerald-400 font-semibold';
-            else if (log.includes('started execution')) textColor = 'text-amber-300';
-            else if (log.includes('Running Intent') || log.includes('Running LLVM')) textColor = 'text-indigo-300';
+            let textColor = 'text-zinc-400';
+            if (log.includes('ERROR') || log.includes('failed')) textColor = 'text-red-400';
+            else if (log.includes('completed successfully') || log.includes('COMPLETED'))
+              textColor = 'text-green-400';
+            else if (log.includes('started execution')) textColor = 'text-amber-300/90';
+            else if (log.includes('Running Intent') || log.includes('Running LLVM')) textColor = 'text-blue-300/90';
 
             return (
-              <div key={index} className={`${textColor} break-all font-mono tracking-tight flex items-start gap-2`}>
-                <span className="opacity-40 select-none text-slate-500">{index + 1}</span>
+              <div key={index} className={`${textColor} break-all flex gap-2`}>
+                <span className="text-zinc-600 select-none w-5 shrink-0 text-right tabular-nums">{index + 1}</span>
                 <span>{log}</span>
               </div>
             );
           })
         ) : (
-          <div className="text-slate-500 italic select-none">
-            &gt; Linter console ready. Waiting for compilation run...
-          </div>
+          <p className="text-zinc-600">&gt; Waiting for input.</p>
         )}
         <div ref={terminalEndRef} />
       </div>
-    </div>
+    </section>
   );
 };

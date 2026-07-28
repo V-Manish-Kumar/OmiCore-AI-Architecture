@@ -9,6 +9,36 @@ interface TelemetryPanelProps {
   clusterStatus?: ClusterStatus;
 }
 
+function MetricCell({
+  icon,
+  label,
+  value,
+  highlight
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={`p-3 rounded-lg ${highlight ? 'bg-green-500/5 border border-green-500/15' : 'panel-muted'}`}
+    >
+      <div className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 text-xs mb-1">
+        {icon}
+        <span>{label}</span>
+      </div>
+      <span
+        className={`text-sm font-semibold tabular-nums font-mono ${
+          highlight ? 'text-green-700 dark:text-green-400' : 'text-zinc-900 dark:text-zinc-100'
+        }`}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
 export const TelemetryPanel: React.FC<TelemetryPanelProps> = ({
   costEstimation,
   tokenStats,
@@ -19,112 +49,89 @@ export const TelemetryPanel: React.FC<TelemetryPanelProps> = ({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="liquid-glass-card rounded-3xl p-5 border border-white/15 shadow-2xl flex flex-col gap-4">
-        <div className="flex items-center gap-2.5 border-b border-white/10 pb-3">
-          <div className="p-2 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-300">
+      <section className="panel p-5 flex flex-col gap-4">
+        <div className="flex items-center gap-3 border-b border-zinc-200 dark:border-zinc-800 pb-3">
+          <div className="icon-tile">
             <Zap className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-slate-100">Optimizer Telemetry</h2>
-            <p className="text-[11px] text-slate-400">Pre-flight cost & latency estimates</p>
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Cost estimate</h3>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">Pre-flight planner projections</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-1">
-            <div className="flex items-center gap-1.5 text-slate-400 text-[11px]">
-              <Clock className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Est. Latency</span>
-            </div>
-            <span className="text-base font-bold text-slate-100 font-mono">
-              {costEstimation?.runtime ? `${costEstimation.runtime}s` : '0.000s'}
-            </span>
-          </div>
-
-          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-1">
-            <div className="flex items-center gap-1.5 text-slate-400 text-[11px]">
-              <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Est. Cost</span>
-            </div>
-            <span className="text-base font-bold text-slate-100 font-mono">
-              {costEstimation?.cost ? `$${costEstimation.cost}` : '$0.0000'}
-            </span>
-          </div>
-
-          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-1">
-            <div className="flex items-center gap-1.5 text-slate-400 text-[11px]">
-              <Zap className="w-3.5 h-3.5 text-purple-400" />
-              <span>Est. Tokens</span>
-            </div>
-            <span className="text-base font-bold text-slate-100 font-mono">
-              {costEstimation?.tokens ? `${costEstimation.tokens}` : '0'}
-            </span>
-          </div>
-
-          <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col gap-1">
-            <div className="flex items-center gap-1.5 text-emerald-300 text-[11px]">
-              <TrendingDown className="w-3.5 h-3.5" />
-              <span>Token Savings</span>
-            </div>
-            <span className="text-base font-bold text-emerald-300 font-mono">
-              {tokenStats?.savings_percentage ? `${tokenStats.savings_percentage}%` : '0.0%'}
-            </span>
-          </div>
+        <div className="grid grid-cols-2 gap-2">
+          <MetricCell
+            icon={<Clock className="w-3.5 h-3.5" />}
+            label="Latency"
+            value={costEstimation?.runtime ? `${costEstimation.runtime}s` : '0.000s'}
+          />
+          <MetricCell
+            icon={<DollarSign className="w-3.5 h-3.5" />}
+            label="Cost"
+            value={costEstimation?.cost ? `$${costEstimation.cost}` : '$0.0000'}
+          />
+          <MetricCell
+            icon={<Zap className="w-3.5 h-3.5" />}
+            label="Tokens"
+            value={costEstimation?.tokens ? `${costEstimation.tokens}` : '0'}
+          />
+          <MetricCell
+            icon={<TrendingDown className="w-3.5 h-3.5" />}
+            label="Savings"
+            value={tokenStats?.savings_percentage ? `${tokenStats.savings_percentage}%` : '0.0%'}
+            highlight
+          />
         </div>
-      </div>
+      </section>
 
-      <div className="liquid-glass-card rounded-3xl p-5 border border-white/15 shadow-2xl flex flex-col gap-4">
-        <div className="flex items-center gap-2.5 border-b border-white/10 pb-3">
-          <div className="p-2 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-300">
+      <section className="panel p-5 flex flex-col gap-4">
+        <div className="flex items-center gap-3 border-b border-zinc-200 dark:border-zinc-800 pb-3">
+          <div className="icon-tile">
             <Server className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-slate-100">Active Cluster Nodes</h2>
-            <p className="text-[11px] text-slate-400">Distributed runtime worker pool</p>
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Workers</h3>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">Registered cluster nodes</p>
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-1">
+        <div className="flex flex-col gap-1.5 max-h-[220px] overflow-y-auto">
           {clusterStatus?.worker_details && clusterStatus.worker_details.length > 0 ? (
             clusterStatus.worker_details.map((worker, idx) => {
               const isActive = worker.state === 'active';
               return (
                 <div
                   key={idx}
-                  className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${
+                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg border ${
                     isActive
-                      ? 'bg-emerald-500/10 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
-                      : 'bg-white/5 border-white/10 hover:border-indigo-500/20'
+                      ? 'border-green-500/25 bg-green-500/5'
+                      : 'panel-muted border-transparent'
                   }`}
                 >
-                  <div className="flex flex-col gap-0.5">
+                  <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span
-                        className={`w-2 h-2 rounded-full ${
-                          isActive
-                            ? 'bg-emerald-400 animate-ping shadow-[0_0_8px_rgba(52,211,153,0.8)]'
-                            : 'bg-slate-500'
-                        }`}
+                        className={`status-dot ${isActive ? 'status-dot-online' : 'bg-zinc-400 dark:bg-zinc-600'}`}
                       />
-                      <span className="text-xs font-semibold font-mono text-slate-100">
+                      <span className="text-xs font-mono font-medium text-zinc-900 dark:text-zinc-100 truncate">
                         {worker.worker_id}
                       </span>
                     </div>
                     {worker.current_node && (
-                      <span className="text-[10px] text-indigo-300 font-mono pl-4">
-                        Executing: {worker.current_node}
-                      </span>
+                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-mono pl-4 mt-0.5 truncate">
+                        {worker.current_node}
+                      </p>
                     )}
                   </div>
-
                   <span
-                    className={`px-2 py-0.5 text-[10px] font-bold rounded-full border uppercase tracking-wide ${
+                    className={`text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded ${
                       isActive
-                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                        : 'bg-slate-800/60 text-slate-400 border-slate-700/50'
+                        ? 'text-green-700 dark:text-green-400 bg-green-500/10'
+                        : 'text-zinc-500 bg-zinc-100 dark:bg-zinc-800'
                     }`}
                   >
-                    {isActive ? 'ACTIVE (Processing)' : 'IDLE (Standby)'}
+                    {isActive ? 'Active' : 'Idle'}
                   </span>
                 </div>
               );
@@ -133,40 +140,36 @@ export const TelemetryPanel: React.FC<TelemetryPanelProps> = ({
             onlineWorkers.map((workerId, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-indigo-500/30 transition-colors"
+                className="flex items-center justify-between px-3 py-2.5 rounded-lg panel-muted"
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="w-2 h-2 rounded-full bg-slate-500" />
-                  <span className="text-xs font-semibold font-mono text-slate-200">{workerId}</span>
+                <div className="flex items-center gap-2">
+                  <span className="status-dot bg-zinc-400 dark:bg-zinc-600" />
+                  <span className="text-xs font-mono text-zinc-800 dark:text-zinc-200">{workerId}</span>
                 </div>
-                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-800/60 text-slate-400 border border-slate-700/50 uppercase tracking-wide">
-                  IDLE (Standby)
-                </span>
+                <span className="text-[10px] font-medium text-zinc-500 uppercase">Idle</span>
               </div>
             ))
           ) : (
-            <div className="p-4 text-center text-xs text-slate-400 bg-white/5 rounded-2xl border border-white/5">
-              No cluster workers registered. Defaulting to local AdaptiveRuntime.
-            </div>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center py-4 panel-muted rounded-lg">
+              No remote workers — using local runtime.
+            </p>
           )}
         </div>
+      </section>
 
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="liquid-glass-card rounded-2xl p-4 border border-white/15 flex flex-col items-center justify-center text-center gap-1">
-          <span className="text-[11px] font-medium text-slate-400">Completed Nodes</span>
-          <span className="text-2xl font-black text-indigo-300 font-mono">
-            {realtimeMetrics ? `${realtimeMetrics.completed_nodes} / ${realtimeMetrics.total_nodes}` : '0 / 0'}
-          </span>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="panel p-4 text-center">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Nodes completed</p>
+          <p className="text-xl font-semibold tabular-nums font-mono text-zinc-900 dark:text-zinc-100">
+            {realtimeMetrics ? `${realtimeMetrics.completed_nodes}/${realtimeMetrics.total_nodes}` : '0/0'}
+          </p>
         </div>
-
-        <div className="liquid-glass-card rounded-2xl p-4 border border-white/15 flex flex-col items-center justify-center text-center gap-1">
-          <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Cluster Health</span>
+        <div className="panel p-4 text-center">
+          <div className="flex items-center justify-center gap-1 text-xs text-zinc-500 dark:text-zinc-400 mb-1">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            Health
           </div>
-          <span className="text-2xl font-black text-emerald-400 font-mono">100%</span>
+          <p className="text-xl font-semibold tabular-nums font-mono text-green-600 dark:text-green-400">100%</p>
         </div>
       </div>
     </div>

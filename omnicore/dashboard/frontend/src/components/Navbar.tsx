@@ -10,6 +10,18 @@ interface NavbarProps {
   toggleTheme: () => void;
 }
 
+const tabs: {
+  id: NavbarProps['activeTab'];
+  label: string;
+  icon: React.ReactNode;
+}[] = [
+  { id: 'ide', label: 'Compiler', icon: <Terminal className="w-3.5 h-3.5" /> },
+  { id: 'graphify', label: 'Graphify', icon: <Share2 className="w-3.5 h-3.5" /> },
+  { id: 'topology', label: 'Topology', icon: <Layers className="w-3.5 h-3.5" /> },
+  { id: 'telemetry', label: 'Telemetry', icon: <Activity className="w-3.5 h-3.5" /> },
+  { id: 'traces', label: 'Traces', icon: <Zap className="w-3.5 h-3.5" /> }
+];
+
 export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   setActiveTab,
@@ -19,114 +31,63 @@ export const Navbar: React.FC<NavbarProps> = ({
   toggleTheme
 }) => {
   return (
-    <header className="sticky top-0 z-50 w-full px-6 py-3 liquid-glass-header transition-colors">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-        {/* Logo & Title */}
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-indigo-600/10 border border-indigo-500/20 text-indigo-500">
-            <Cpu className="w-5 h-5" />
+    <header className="sticky top-0 z-50 w-full px-4 sm:px-6 py-3 app-header liquid-glass-header">
+      <div className="max-w-[1400px] mx-auto flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="icon-tile">
+            <Cpu className="w-4 h-4" />
           </div>
-          <div>
-            <h1 className="text-sm font-bold tracking-tight flex items-center gap-2">
-              OmniCore AI
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
-                v2.4
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 truncate">
+                OmniCore
+              </h1>
+              <span className="hidden sm:inline text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
+                Compiler dashboard
               </span>
-            </h1>
-            <p className="text-[11px] opacity-70 font-medium">Provider-Agnostic AI Task Compiler & Runtime</p>
+            </div>
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <nav className="flex items-center p-1 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 backdrop-blur-md">
-          <button
-            onClick={() => setActiveTab('ide')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
-              activeTab === 'ide'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5'
-            }`}
-          >
-            <Terminal className="w-3.5 h-3.5" />
-            Compiler IDE
-          </button>
-          <button
-            onClick={() => setActiveTab('graphify')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
-              activeTab === 'graphify'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5'
-            }`}
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            Graphify Graph
-          </button>
-          <button
-            onClick={() => setActiveTab('topology')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
-              activeTab === 'topology'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            Topology Builder
-          </button>
-          <button
-            onClick={() => setActiveTab('telemetry')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
-              activeTab === 'telemetry'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5'
-            }`}
-          >
-            <Activity className="w-3.5 h-3.5" />
-            Telemetry & Nodes
-          </button>
-          <button
-            onClick={() => setActiveTab('traces')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
-              activeTab === 'traces'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5'
-            }`}
-          >
-            <Zap className="w-3.5 h-3.5" />
-            Profiler & Traces
-          </button>
+        <nav className="nav-rail flex flex-wrap items-center overflow-x-auto">
+          {tabs.map(({ id, label, icon }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setActiveTab(id)}
+              className={`nav-tab flex items-center gap-1.5 whitespace-nowrap ${
+                activeTab === id ? 'nav-tab-active' : ''
+              }`}
+            >
+              {icon}
+              {label}
+            </button>
+          ))}
         </nav>
 
-        {/* Right Actions & Theme Toggle */}
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs font-semibold">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </span>
-            <span>{status || 'Cluster Online'} ({activeWorkersCount} Active)</span>
+        <div className="flex items-center gap-2 shrink-0">
+          <div
+            className="hidden sm:flex items-center gap-2 px-2.5 py-1.5 rounded-lg panel-muted text-xs font-medium text-zinc-600 dark:text-zinc-300"
+            title="Cluster status"
+          >
+            <span className={`status-dot ${status === 'online' ? 'status-dot-online' : 'bg-zinc-500'}`} />
+            <span className="capitalize">{status || 'online'}</span>
+            <span className="text-zinc-400 dark:text-zinc-500">·</span>
+            <span>{activeWorkersCount} workers</span>
           </div>
 
-
           <button
+            type="button"
             onClick={toggleTheme}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/15 border border-black/10 dark:border-white/10 text-xs font-semibold transition-all cursor-pointer"
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            className="btn-secondary p-2 sm:px-3 sm:py-1.5"
+            title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            aria-label="Toggle theme"
           >
-            {theme === 'dark' ? (
-              <>
-                <Sun className="w-4 h-4 text-amber-400" />
-                <span className="hidden md:inline">Light</span>
-              </>
-            ) : (
-              <>
-                <Moon className="w-4 h-4 text-indigo-500" />
-                <span className="hidden md:inline">Dark</span>
-              </>
-            )}
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            <span className="hidden md:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
           </button>
         </div>
       </div>
     </header>
   );
 };
-
